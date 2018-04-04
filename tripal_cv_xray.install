@@ -77,3 +77,8 @@ function tripal_cvterm_entity_index_schema() {
   return $schema;
 
 }
+
+
+function tripal_cv_xray_uninstall(){
+  db_drop_table("public.tripal_cvterm_entity_index");
+}
