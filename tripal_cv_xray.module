@@ -1,0 +1,5 @@
+<?php
+
+//Load in required files
+
+require_once "includes/ChadoEntityChildCvterm.inc";
