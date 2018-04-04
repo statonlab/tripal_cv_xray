@@ -1,0 +1,8 @@
+name = Tripal CV Xray
+description = Tripal X-ray allows you to map entities onto CV trees.  It provies admin tools for associating entities with CVterms, and a configurable field that maps entities onto the CV.
+core = 7.x
+package = Tripal Extensions
+files[] = tripal_cv_xray.module
+configuration = admin/tripal/extension/tripal_cv_xray
+version=7.x-3.0
+dependencies[] = tripal

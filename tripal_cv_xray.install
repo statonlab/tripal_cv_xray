@@ -1,0 +1,79 @@
+<?php
+
+/**
+*Hook Schema
+*/
+
+function tripal_cv_xray_schema() {
+$schema = [];
+
+  $schema['tripal_cvterm_entity_index'] = tripal_cvterm_entity_index_schema();
+
+return $schema;
+
+}
+
+/**
+ * Tripal cvterm entity index schema
+ *
+ * This schema is for storing cvterm usage for entities.  The CVterm browser
+ * uses this schema to provide filterable lists of entities that associate with
+ * a given CVterm and its child terms.
+ *
+ * @return array
+ */
+function tripal_cvterm_entity_index_schema() {
+
+  $schema = array(
+    'description' => 'This table is used for tracking cvterm annotations.',
+    'fields' => array(
+      'cvterm_entity_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'cvterm_id' => array(
+        'description' => 'chado cvterm id',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'database' => array(
+        'description' => 'Database shortname for term.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+      ),
+      'accession' => array(
+        'description' => 'Term accession.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+      ),
+      'bundle_id' => array(
+        'description' => 'Bundle table.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+      ),
+      'entities_array' => array(
+        'description' => 'Entities associated with this term and all child terms',
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array(
+      'cvterm_entity_id',
+    ),
+    'indexes' => array(
+      'accession' => array('accession'),
+      'db' => array('database'),
+    ),
+    'foreign keys' => array(
+      'cvterm' => array(
+        'table' => 'cvterm',
+        'columns' => array(
+          'uid' => 'cvterm_id',
+        ),
+      ),
+    ),
+  );
+
+  return $schema;
+
+}
