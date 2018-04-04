@@ -3,3 +3,25 @@
 //Load in required files
 
 require_once "includes/ChadoEntityChildCvterm.inc";
+
+
+/**
+ * implement hook menu
+ */
+
+function tripal_cv_xray_menu() {
+  $admin_url_base = 'admin/tripal/extension/tripal_cv_xray';
+
+  $items[$admin_url_base] = [
+    'title' => 'Tripal CV X-ray',
+    'description' => t('The CV-X-ray module allows you to create browsable CV trees with entities mapped onto the terms.  For example, you can create a GO tree for organisms that shows features for the organism.  These admin settings are for populating the tables necessary for these trees to work.'),
+    'access arguments' => [' tripal cv xray'],
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['tripal_cv_xray_cvterm_entity_form'],
+    'file' => 'includes/tripal_cv_xray_cvterm_entity_config.form.inc',
+    'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
+  ];
+
+  return $items;
+
+}
