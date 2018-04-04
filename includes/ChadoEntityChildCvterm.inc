@@ -2,6 +2,27 @@
 
 class ChadoEntityChildCvterm {
 
+//
+//  public function update_specific_entities($entities) {
+//
+//    foreach ($entities as $entity) {
+//      $types = NULL;
+//      $eid = $entity->entity_id;
+//      $rid = $entity->record_id;
+//      //directly associated cvterms
+//
+//      //data table needs to coem from entity instead
+//
+//      $cvterms = $this->get_all_associated_cvterms($bundle->data_table, $rid);
+//      //why is this always NULL?
+//      if (!$cvterms) {
+//        continue;
+//      }
+//
+//    }
+//  }
+
+
   public function update_all_entities() {
     //First, empty db
     db_truncate("public.tripal_cvterm_entity_index")->execute();
@@ -32,8 +53,6 @@ class ChadoEntityChildCvterm {
         $rid = $entity->record_id;
         //directly associated cvterms
         $cvterms = $this->get_all_associated_cvterms($bundle->data_table, $rid);
-        //why is this always NULL?
-
         if (!$cvterms) {
           continue;
         }
@@ -144,40 +163,21 @@ class ChadoEntityChildCvterm {
    */
 
   public function get_all_associated_cvterms($base_table, $record_id) {
-    $out = [];
     $chado_table = "chado." . $base_table;
     $prop_table = "chado." . $base_table . "prop";
     $cvterm_table = "chado." . $base_table . "_cvterm";
 
-    if ($base_table != 'feature') {
+    if ($base_table != 'feature' && $base_table != 'biomaterial') {
       return NULL;
     }
-    $id_column = "feature_id";
+    $out = [];
 
-    //get all related features
-
-    $records = [$record_id];
-
-    $query = db_select($chado_table . "_relationship", "CR");
-    $query->fields("CR", ["subject_id"])
-      ->condition("CR.object_id", $record_id);
-    $subjects = $query->execute()->fetchAll();
-
-    foreach ($subjects as $subject) {
-      $records[] = $subject->subject_id;
-    }
-    $query = db_select($chado_table . "_relationship", "CR");
-    $query->fields("CR", ["object_id"])
-      ->condition("CR.subject_id", $record_id);
-    $objects = $query->execute()->fetchAll();
-
-    foreach ($objects as $object) {
-      $records[] = $object->object_id;
-    }
+    $id_column = $base_table . "_id";
+    $records = $this->get_related_records($chado_table, $record_id);
 
     //1  the type_id in the base table
-    $query = db_select($chado_table, "CT");
     if (db_field_exists($chado_table, "type_id")) {
+      $query = db_select($chado_table, "CT");
       $query->fields("CT", ["type_id"])
         ->condition("CT.feature_id", $records, 'IN');
       $results = $query->execute()->fetchAll();
@@ -195,6 +195,7 @@ class ChadoEntityChildCvterm {
       $prop_fields = ["type_id", "cvalue_id"];
       $prop_fields_alias = ["prop_type_id", "prop_cvalue_id"];
     }
+
     $query = db_select($prop_table, "P");
     $query->fields("P", $prop_fields, $prop_fields_alias)
       ->condition("P." . $id_column, $records, 'IN');
@@ -226,7 +227,6 @@ class ChadoEntityChildCvterm {
 
     return $out;
   }
-
   /**
    * Gets array of all Tripal bundle entities
    *
@@ -252,6 +252,37 @@ class ChadoEntityChildCvterm {
     }
 
     return $bundles;
+  }
+
+
+  /**
+   * Gets related records linked via _relationship linker table.
+   *
+   * @param $chado_table
+   * @param $record_id
+   *
+   * @return array
+   */
+  private function get_related_records($chado_table, $record_id) {
+    $records = [$record_id];
+    $query = db_select($chado_table . "_relationship", "CR");
+    $query->fields("CR", ["subject_id"])
+      ->condition("CR.object_id", $record_id);
+    $subjects = $query->execute()->fetchAll();
+
+    foreach ($subjects as $subject) {
+      $records[] = $subject->subject_id;
+    }
+    $query = db_select($chado_table . "_relationship", "CR");
+    $query->fields("CR", ["object_id"])
+      ->condition("CR.subject_id", $record_id);
+    $objects = $query->execute()->fetchAll();
+
+    foreach ($objects as $object) {
+      $records[] = $object->object_id;
+    }
+
+    return $records;
   }
 
 }
