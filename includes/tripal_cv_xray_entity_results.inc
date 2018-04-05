@@ -1,6 +1,6 @@
 <?php
 function tripal_cv_xray_entity_view($anchor_id, $entities) {
-  $per_page = 1;
+  $per_page = 20;
   $entities = explode(",", $entities);
 
   $anchor = TripalEntity_load($anchor_id);
