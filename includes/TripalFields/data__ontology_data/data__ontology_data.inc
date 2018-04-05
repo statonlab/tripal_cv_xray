@@ -102,23 +102,24 @@ class data__ontology_data extends TripalField {
 
     $entity->{$field_name}['und'][0]['value'] = NULL;
 
-    $child_entities = $this->fetch_associated_features($entity);
-    //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
+    $settings = $this->instance['settings']['container'];
 
-
-    $settings = $this->instance['settings'];
     $cv_id = $settings['CV'];
+
+
+    $target_bundle = $settings['target_bundle'];
+
+    //TODO:  Inconsistent.  Do we allow single or multiple target bundles?
+    $child_entities = $this->fetch_associated_features($entity, $target_bundle);
+    //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
 
     $query = db_select("chado.db2cv_mview", 'DBCV')
       ->fields("DBCV", ['dbname'])
       ->condition('cv_id', $cv_id);
     $cv_shortname = $query->execute()->fetchField();
 
-    dpm($cv_shortname);
-
     //retrieve cvterms from cvterm->entity index as DB:accession
 
-    $target_bundle = $settings['target_bundle'];
     $child_entity_cvterms = [];
 
     //Look up all cvterm:entity mappings for this field's CV
@@ -168,70 +169,86 @@ class data__ontology_data extends TripalField {
    *
    * @return array
    */
-  private function fetch_associated_features($entity) {
+  private function fetch_associated_features($entity, $target_bundle) {
     $entity_id = $entity->id;
     // $bundle = tripal_load_bundle_entity(array('name' => $entity->bundle));
 
     $child_entities = [];
     $record_id = $entity->chado_record_id;
 
-    //If organism, we'll load all the features associated with it in the type_id column
+    $query = db_select('public.chado_bundle', 'tb')
+      ->fields('tb', ['bundle_id', 'type_id', 'data_table'])
+      ->condition('bundle_id', $target_bundle, '=');
+    $target_info = $query->execute()->fetchObject();
+
+    $type_id = $target_info->type_id;
+    $bundle_id = $target_info->bundle_id;
+    $target_chado_table = $target_info->data_table;
+    $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
+
+    $results = NULL;//end query, set to null
+
+
+    $target_record_column = $target_chado_table . "_id";
+
     if ($entity->chado_table == 'organism') {
-
-      $query = db_select('public.chado_bundle', 'tb')
-        ->fields('tb', ['bundle_id', 'type_id', 'data_table'])
-        ->condition('data_table', 'feature', '=');
-      $feature_bundles = $query->execute()->fetchAll();
-
-      //TODO: refactor this.  we're only mapping one entity type!
-      foreach ($feature_bundles as $fb) {
-        $type_id = $fb->type_id;
-        $bundle_id = $fb->bundle_id;
-        $bundle_table = "public.chado_bio_data_" . $bundle_id;
-
-        //fetch all features of that type associated with this organism
-        $query = db_select($bundle_table, 'bt');
-        $query->fields('bt', ['entity_id']);
-        $query->join('chado.feature', "cf", 'bt.record_id = cf.feature_id');
-        $query->join('public.tripal_entity', 'te', 'te.id = bt.entity_id');
-        $query->fields('te', ['title']);
-        $query->condition('cf.organism_id', $record_id, '=');
-        $results = $query->execute()
-          ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
-
-        if ($results) {
-          $child_entities[$bundle_table] = $results;
-        }
+      $query = db_select($target_bundle_table, 'tbt');
+      $query->fields('tbt', ['entity_id']);
+      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
+      $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
+      $query->fields('te', ['title']);
+      if ($target_chado_table == 'biomaterial') {
+        $query->condition('tct.taxon_id', $record_id, '=');
       }
+      else {
+        //works with feature in mind, and will work when chado table has organism_id column
+        $query->condition('tct.organism_id', $record_id, '=');
+      }
+      $results = $query->execute()
+        ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
+    }
+    if ($entity->chado_table == 'analysis') {
+      return NULL;
+      //we dont know what we're doing!
+      $query = db_select($target_bundle_table, 'tbt');
+      $query->fields('tbt', ['entity_id']);
+      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
+      $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
+      $query->fields('te', ['title']);
+    }
+    if ($results) {
+      $child_entities[$bundle_id] = $results;
     }
 
     return $child_entities;
   }
 
 
-  public
-  function instanceSettingsForm() {
+  public function instanceSettingsForm() {
 
-    // Retrieve the current settings.
+
+    $bundle = $this->instance["bundle"];
+    $bundle_info = tripal_load_bundle_entity($bundle);
+    $anchor_base_table = $bundle_info->data_table;
+
     $settings = $this->instance['settings'];
+    $element['container'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->field["field_name"],
+    ];
 
-    //defaults...
+    //We could be way more sophisticated here...
+    if ($anchor_base_table != "organism" || $anchor_base_table == "analysis") {
+      $element['container']['target_bundle'] = array(
+        '#markup' => '<b>Error:</b>
+          The base table for this bundle, ' . $anchor_base_table . ', is not configured to work with this field.
+          Please attach this field to an organism or analysis bundle instead.',
+      );
 
-//    if (!isset($settings['CV'])) {
-//      $settings['CV'] = self::$default_settings['CV'];
-//    }
-//    if (!isset($settings['target_bundle'])) {
-//      $settings['target_bundle'] = self::$default_settings['target_bundle'];
-//    }
+      return $element;
+    }
 
-
-    //lacey warns people :P
-//    $element['msg'] = array(
-//      '#type' => 'markup',
-//      '#markup' => '<div class="messages warning">Settings are only saved after you click "Update" within this box <br />AND "Save" at the bottom of the page!</div>',
-//    );
-
-    $element['instructions'] = array(
+    $element['container']['instructions'] = array(
       '#type' => 'markup',
       '#markup' => '<div><p>The ontology data browser provides an interactive tree of a CV.  Records that relate to the entity this field displays on will appear on the tree.</p><p>
 Before you can use this field, you must choose which CV to display, and what entity types will map to this bundle. Currently, the following mappings are supported: Organism <- feature.
@@ -259,17 +276,16 @@ Before you can use this field, you must choose which CV to display, and what ent
 
     // Add in all the general settings
     //-------------------------------------------
-    $element['CV'] = array(
+    $element['container']['CV'] = array(
       '#type' => 'select',
       '#title' => 'CV',
       '#description' => 'The CV you would like to map entities to.',
       '#options' => $cv_options,
     );
 
-    //TODO: Look at qualify base tables for this instance, then get all entities.
-
-    $base_tables = ["feature", "biomaterial"];
-
+    if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
+      $base_tables = ["feature", "biomaterial"];
+    }
 
     $target_bundles = [];
 
@@ -284,7 +300,7 @@ Before you can use this field, you must choose which CV to display, and what ent
       $target_bundles[$result->bundle_id] = $result->label;
     }
 
-    $element['target_bundle'] = array(
+    $element['container']['target_bundle'] = array(
       '#type' => 'select',
       '#title' => 'Target Bundle to Map Onto CV Tree',
       '#description' => 'The entity type you are mapping.  For example, if mapping features to an organism, you would select the feature bundle here.',
@@ -292,8 +308,6 @@ Before you can use this field, you must choose which CV to display, and what ent
     );
 
     return $element;
-
-
   }
 
 }
