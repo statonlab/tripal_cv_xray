@@ -102,6 +102,11 @@ class data__ontology_data extends TripalField {
 
     $entity->{$field_name}['und'][0]['value'] = NULL;
 
+
+if (!isset($this->instance['settings']['container'])) {
+	return NULL;
+}
+
     $settings = $this->instance['settings']['container'];
 
     $cv_id = $settings['CV'];
@@ -112,7 +117,7 @@ class data__ontology_data extends TripalField {
     //TODO:  Inconsistent.  Do we allow single or multiple target bundles?
     $child_entities = $this->fetch_associated_features($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
-
+dpm($child_entities);
     $query = db_select("chado.db2cv_mview", 'DBCV')
       ->fields("DBCV", ['dbname'])
       ->condition('cv_id', $cv_id);
@@ -142,7 +147,6 @@ class data__ontology_data extends TripalField {
       $cvterm_id = $result->cvterm_id;
       $entities_serial = $result->entities_array;
       $entities_with_term_info = unserialize($entities_serial);
-
       $target_bundle_table = "public.chado_bio_data_" . $target_bundle;
       $mapped_entities = $child_entities[$target_bundle_table];
       $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
@@ -227,7 +231,7 @@ class data__ontology_data extends TripalField {
 
 
     $bundle = $this->instance["bundle"];
-    $bundle_info = tripal_load_bundle_entity($bundle);
+    $bundle_info = tripal_load_bundle_entity(['name' => $bundle]);
     $anchor_base_table = $bundle_info->data_table;
 
     $settings = $this->instance['settings'];
