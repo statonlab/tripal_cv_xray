@@ -117,7 +117,6 @@ if (!isset($this->instance['settings']['container'])) {
     //TODO:  Inconsistent.  Do we allow single or multiple target bundles?
     $child_entities = $this->fetch_associated_features($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
-dpm($child_entities);
     $query = db_select("chado.db2cv_mview", 'DBCV')
       ->fields("DBCV", ['dbname'])
       ->condition('cv_id', $cv_id);

@@ -86,6 +86,9 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     // Get the settings
     $settings = $display['settings'];
 
+    if (!$items[0]['value']) {
+      return null;
+    }
     $term_to_entity_map = $items[0]['value'];
     $this->entity_term_map = $term_to_entity_map;
 
