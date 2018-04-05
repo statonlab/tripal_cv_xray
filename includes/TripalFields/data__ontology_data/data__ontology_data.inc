@@ -142,7 +142,7 @@ class data__ontology_data extends TripalField {
       $cvterm_id = $result->cvterm_id;
       $entities_serial = $result->entities_array;
       $entities_with_term_info = unserialize($entities_serial);
-
+      
       $target_bundle_table = "public.chado_bio_data_" . $target_bundle;
       $mapped_entities = $child_entities[$target_bundle_table];
       $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
@@ -217,9 +217,8 @@ class data__ontology_data extends TripalField {
       $query->fields('te', ['title']);
     }
     if ($results) {
-      $child_entities[$bundle_id] = $results;
+      $child_entities[$target_bundle_table] = $results;
     }
-
     return $child_entities;
   }
 
