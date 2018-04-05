@@ -108,7 +108,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $root_terms = tripal_get_vocabulary_terms($vocabulary_name, 25);
       $has_root = FALSE;
     }
-    $items = $this->field_lookup_term_children_format($root_terms);
+    $items = $this->field_lookup_term_children_format($entity->id, $root_terms);
 
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
@@ -171,7 +171,8 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    * @return string
    */
 
-  function field_lookup_term_children_format($children) {
+  function field_lookup_term_children_format($anchor_entity_id, $children) {
+
 
     $map = $this->entity_term_map;
 
@@ -210,7 +211,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         }
         //TODO: we want to build a linkout here.  Entity_id isnt exposed for views though.
         $flattened_entities = implode(",", array_keys($child_mapping));
-        $items .= l("  {$num_mapped} " . $record_word, 'entities/' . $flattened_entities);
+        $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' . $anchor_entity_id . '/' . $flattened_entities);
       }
       $items .= '</li>';
     }
