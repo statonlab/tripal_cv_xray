@@ -22,6 +22,18 @@ function tripal_cv_xray_menu() {
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
+
+  $items['cv_entities/%/%'] = array(
+    'type' => MENU_NORMAL_ITEM,
+    'title' => t('Matching Entities'),
+    'description' => 'Mapped entities associated with a CVterm',
+    'page callback' => 'tripal_cv_xray_entity_view',
+    'page arguments' => array(1, 2), //cv and entity array
+    'file' => 'includes/tripal_cv_xray_entity_results.inc',
+    'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
+  );
+
+
   return $items;
 
 }
