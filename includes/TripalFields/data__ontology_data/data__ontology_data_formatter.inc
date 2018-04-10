@@ -252,6 +252,13 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     return '';
   }
 
+  /**
+   * @param $terms
+   * @param $target_bundle
+   * @param $child_entities
+   *
+   * @return array
+   */
   private function lookup_entities_for_terms($terms, $target_bundle, $child_entities) {
 
     $child_entity_cvterms = [];
@@ -270,6 +277,12 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         ->condition("accession", $accession);
 
       $ent_array = $query->execute()->fetchField();
+      //Check if null here.
+
+      if (!$ent_array ){
+        continue;
+      }
+
       $entities_with_term_info = unserialize($ent_array);
       //NEXT: filter the array to just entities mapped on this instance of the field
       $mapped_entities = $child_entities[$target_bundle_table];
