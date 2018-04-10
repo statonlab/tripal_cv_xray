@@ -299,7 +299,23 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $key = $short_name . ":" . $accession;
       $child_entity_cvterms[$key] = $matched;
     }
-
     return ($child_entity_cvterms);
   }
+
+  
+  /**
+   * Ajax callback for tree.
+   */
+  public static function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession){
+
+    $term = tripal_get_term_details($vocabulary, $accession);
+    $children = tripal_get_term_children($vocabulary, $accession);
+    $response = array(
+      'vocabulary' => $vocabulary,
+      'accession' => $accession,
+      'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps)
+    );
+    drupal_json_output($response);
+  }
+
 }
