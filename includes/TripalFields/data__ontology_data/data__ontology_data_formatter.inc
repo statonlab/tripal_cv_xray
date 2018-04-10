@@ -95,10 +95,10 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     $vocabulary_id = $items[0]['cv']['id'];
     $target_bundle_id = $items[0]['target'];
 
-    if (!array_key_exists($child_entities['public.chado_bio_data_' . $target_bundle_id])){
+    if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])){
       return NULL;
     }
-    
+
     $vocab = tripal_get_vocabulary_details($vocabulary_name); //short name
 
     // If we can't find the term then just return a message.
