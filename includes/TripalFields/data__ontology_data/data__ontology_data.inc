@@ -102,7 +102,6 @@ class data__ontology_data extends TripalField {
 
     $entity->{$field_name}['und'][0]['value'] = NULL;
 
-
 if (!isset($this->instance['settings']['container'])) {
 	return NULL;
 }
@@ -117,49 +116,19 @@ if (!isset($this->instance['settings']['container'])) {
     //TODO:  Inconsistent.  Do we allow single or multiple target bundles?
     $child_entities = $this->fetch_associated_features($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
+
+
     $query = db_select("chado.db2cv_mview", 'DBCV')
       ->fields("DBCV", ['dbname'])
       ->condition('cv_id', $cv_id);
     $cv_shortname = $query->execute()->fetchField();
 
-    //retrieve cvterms from cvterm->entity index as DB:accession
 
-    $child_entity_cvterms = [];
-
-    //Look up all cvterm:entity mappings for this field's CV
-    $query = db_select("chado.cvterm", 'CVT')
-      ->fields("CVT", ["cvterm_id"])
-      ->condition("cv_id", $cv_id);
-    $query->join("public.tripal_cvterm_entity_index", "CEI", "CVT.cvterm_id = CEI.cvterm_id");
-    $query->fields("CEI", [
-      "bundle_id",
-      "database",
-      "accession",
-      "entities_array",
-    ])
-      ->condition("bundle_id", $target_bundle);
-
-    $results = $query->execute();
-
-    //NEXT: filter the array to just entities mapped on this instance of the field
-    foreach ($results as $result) {
-      $cvterm_id = $result->cvterm_id;
-      $entities_serial = $result->entities_array;
-      $entities_with_term_info = unserialize($entities_serial);
-      $target_bundle_table = "public.chado_bio_data_" . $target_bundle;
-      $mapped_entities = $child_entities[$target_bundle_table];
-      $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
-
-      //build storage key
-
-      $key = $result->database . ":" . $result->accession;
-      $child_entity_cvterms[$key] = $matched;
-      //TODO: we're missing the titles.  They are in $mapped_entities, keyed by the entity ID (just like the other arrray)  We could loop through to get them...
-    }
-
-    $entity->{$field_name}['und'][0]['value'] = $child_entity_cvterms;
-    $entity->{$field_name}['und'][0]['cv'] = $cv_shortname;
-
+    //just entities
+    $entity->{$field_name}['und'][0]['value'] = $child_entities;
+    $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
+    $entity->{$field_name}['und'][0]['cv']['id'] = $cv_id;
+    $entity->{$field_name}['und'][0]['target'] = $target_bundle;
   }
 
 

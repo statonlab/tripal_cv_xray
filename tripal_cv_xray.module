@@ -30,6 +30,7 @@ function tripal_cv_xray_menu() {
     'page callback' => 'tripal_cv_xray_entity_view',
     'page arguments' => array(1, 2), //cv and entity array
     'file' => 'includes/tripal_cv_xray_entity_results.inc',
+    'access arguments' => array('view content'),
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   );
 

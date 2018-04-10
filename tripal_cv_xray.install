@@ -48,7 +48,7 @@ function tripal_cvterm_entity_index_schema() {
       ),
       'bundle_id' => array(
         'description' => 'Bundle table.',
-        'type' => 'varchar',
+        'type' => 'int',
         'not null' => TRUE,
       ),
       'entities_array' => array(

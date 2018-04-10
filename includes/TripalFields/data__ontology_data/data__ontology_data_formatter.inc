@@ -87,13 +87,17 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     $settings = $display['settings'];
 
     if (!$items[0]['value']) {
-      return null;
+      return NULL;
     }
-    $term_to_entity_map = $items[0]['value'];
-    $this->entity_term_map = $term_to_entity_map;
 
-    $vocabulary_name = $items[0]['cv'];
+    $child_entities = $items[0]['value'];
+    $vocabulary_name = $items[0]['cv']['short_name'];
+    $vocabulary_id = $items[0]['cv']['id'];
+    $target_bundle_id = $items[0]['target'];
 
+    if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])){
+      return NULL;
+    }
 
     $vocab = tripal_get_vocabulary_details($vocabulary_name); //short name
 
@@ -105,13 +109,14 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     }
 
     $has_root = TRUE;
-
     $root_terms = tripal_get_vocabulary_root_terms($vocabulary_name);
     if (count($root_terms) == 0) {
       $root_terms = tripal_get_vocabulary_terms($vocabulary_name, 25);
       $has_root = FALSE;
     }
-    $items = $this->field_lookup_term_children_format($entity->id, $root_terms);
+    $onscreen_entity_maps = $this->lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
+
+    $items = $this->field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps);
 
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
@@ -122,10 +127,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         'then the tree will consist of all terms at the same level. ' .
         'For some vocabularies, only a subset of terms are loaded</p>' . $items;
     }
-
-    $onscreen_entity_maps = [];
-
-    //TODO: Filter based on visible CVterms
 
 
     drupal_add_js(array(
@@ -174,11 +175,8 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    * @return string
    */
 
-  function field_lookup_term_children_format($anchor_entity_id, $children) {
-
-
-    $map = $this->entity_term_map;
-
+  function field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps) {
+    $map = $onscreen_entity_maps;
     $items = '<ul id="tripal-cv-lookup-tree">';
     foreach ($children as $child) {
 
@@ -201,7 +199,10 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         $items .= ' [' . $child_name . '] ';
       }
 
-      $child_mapping = $map[$child_name];
+      $child_mapping = NULL;
+      if (isset($map[$child_name])) {
+        $child_mapping = $map[$child_name];
+      }
       $num_mapped = count($child_mapping);
 
       if ($num_mapped == 0) {
@@ -258,4 +259,47 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     return '';
   }
 
+  /**
+   * @param $terms
+   * @param $target_bundle
+   * @param $child_entities
+   *
+   * @return array
+   */
+  private function lookup_entities_for_terms($terms, $target_bundle, $child_entities) {
+
+    $child_entity_cvterms = [];
+
+    $target_bundle_table = "public.chado_bio_data_" . $target_bundle;
+
+    foreach ($terms as $term) {
+      $accession = $term["accession"];
+      $short_name = $term["vocabulary"]["short_name"];
+
+      $query = db_select("public.tripal_cvterm_entity_index", "CEI");
+      $query->fields("CEI", [
+        "entities_array",
+      ])
+        ->condition("bundle_id", $target_bundle)
+        ->condition("database", $short_name)
+        ->condition("accession", $accession);
+
+      $ent_array = $query->execute()->fetchField();
+      //Check if null here.
+
+      if (!$ent_array) {
+        continue;
+      }
+
+      $entities_with_term_info = unserialize($ent_array);
+      //NEXT: filter the array to just entities mapped on this instance of the field
+      $mapped_entities = $child_entities[$target_bundle_table];
+      $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
+
+      $key = $short_name . ":" . $accession;
+      $child_entity_cvterms[$key] = $matched;
+    }
+
+    return ($child_entity_cvterms);
+  }
 }
