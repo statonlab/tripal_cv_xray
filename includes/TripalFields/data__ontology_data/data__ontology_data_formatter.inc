@@ -276,6 +276,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $query->fields("CEI", [
         "entities_array",
       ])
+        ->condition("bundle_id", $target_bundle)
         ->condition("database", $short_name)
         ->condition("accession", $accession);
 
