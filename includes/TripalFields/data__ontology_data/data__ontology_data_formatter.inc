@@ -195,7 +195,10 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         $items .= ' [' . $child_name . '] ';
       }
 
-      $child_mapping = $map[$child_name];
+      $child_mapping = NULL;
+      if (isset($map[$child_name])) {
+        $child_mapping = $map[$child_name];
+      }
       $num_mapped = count($child_mapping);
 
       if ($num_mapped == 0) {
@@ -279,7 +282,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $ent_array = $query->execute()->fetchField();
       //Check if null here.
 
-      if (!$ent_array ){
+      if (!$ent_array) {
         continue;
       }
 
