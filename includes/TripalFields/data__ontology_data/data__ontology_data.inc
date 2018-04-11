@@ -171,14 +171,18 @@ Before you can use this field, you must choose which CV to display, and what ent
       ->fields("t", ["database"])
       ->distinct()
       ->execute()
-      ->fetchAssoc();
+      ->fetchAll();
 
+    $ontology_options = [];
 
+    foreach($ontologies as $ontology){
+      $ontology_options[$ontology->database] = $ontology->database;
+    }
     $element['container']['ontology'] = array(
       '#type' => 'select',
       '#title' => 'Ontology',
       '#description' => 'The ontology you would like to map entities to.',
-      '#options' => $ontologies,
+      '#options' => $ontology_options,
     );
 
     $query = db_select("public.tripal_cvterm_entity_index", "tcei")
