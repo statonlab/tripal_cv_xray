@@ -205,7 +205,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $num_mapped = count($child_mapping);
 
       if ($num_mapped == 0) {
-        $items .= "  No associated records.";
+        $items .= "";//no message
       }
       else {
         $record_word = "records.";
