@@ -102,14 +102,14 @@ class data__ontology_data extends TripalField {
 
     $entity->{$field_name}['und'][0]['value'] = NULL;
 
-if (!isset($this->instance['settings']['container'])) {
-	return NULL;
-}
+    if (!isset($this->instance['settings']['container'])) {
+      return NULL;
+    }
 
     $settings = $this->instance['settings']['container'];
 
 
-   // $cv_id = $settings['CV'];
+    // $cv_id = $settings['CV'];
     $cv_shortname = $settings['ontology'];
 
 
@@ -171,7 +171,7 @@ Before you can use this field, you must choose which CV to display, and what ent
       ->fields("t", ["database"])
       ->distinct()
       ->execute()
-    ->fetchAssoc();
+      ->fetchAssoc();
 
 
     $element['container']['ontology'] = array(
@@ -181,30 +181,25 @@ Before you can use this field, you must choose which CV to display, and what ent
       '#options' => $ontologies,
     );
 
-//    $bundles = db_select("public.tripal_cvterm_entity_index", "t")
-//      ->fields("t", ["bundle_id"])
-//      ->distinct()
-//      ->execute()
-//      ->fetchAssoc();
-
-
-    if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
-      $base_tables = ["feature", "biomaterial"];
-    }
-
+    $query = db_select("public.tripal_cvterm_entity_index", "tcei")
+      ->fields("tcei", ["bundle_id"])
+      ->distinct();
+    $query->join("public.tripal_bundle", "tb", "tb.term_id = tcei.bundle_id");
+    $query->fields("tb", ["label"]);
+    $bundles = $query->execute()
+      ->fetchAll();
     $target_bundles = [];
 
-    $query = db_select("public.chado_bundle", 'CB')
-      ->fields("CB", ["bundle_id", "data_table"])
-      ->condition("data_table", $base_tables, 'IN');
-    $query->join("public.tripal_bundle", "TB", "CB.bundle_id = TB.id");
-    $results = $query->fields("TB", ["label"])
-      ->execute();
-
-    foreach ($results as $result) {
-      $target_bundles[$result->bundle_id] = $result->label;
+    foreach ($bundles as $bundle) {
+  $bundle_id = $bundle->bundle_id;
+  $label = $bundle->label;
+  $target_bundles[$bundle_id] = $label;
     }
 
+    if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
+    //  $base_tables = ["feature", "biomaterial"];
+    }
+    
     $element['container']['target_bundle'] = array(
       '#type' => 'select',
       '#title' => 'Target Bundle to Map Onto CV Tree',
