@@ -114,7 +114,8 @@ if (!isset($this->instance['settings']['container'])) {
     $target_bundle = $settings['target_bundle'];
 
     //TODO:  Inconsistent.  Do we allow single or multiple target bundles?
-    $child_entities = $this->fetch_associated_features($entity, $target_bundle);
+
+    $child_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
 
 
@@ -130,70 +131,6 @@ if (!isset($this->instance['settings']['container'])) {
     $entity->{$field_name}['und'][0]['cv']['id'] = $cv_id;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
   }
-
-
-  /**
-   * This function should probably be moved out of the field and performed at
-   * regular intervals and teh results stored in a table. For now, it runs on
-   * load, and retrieves ALL ENTITIES associated with the anchor entity.
-   *
-   * @param $entity
-   *
-   * @return array
-   */
-  private function fetch_associated_features($entity, $target_bundle) {
-    $entity_id = $entity->id;
-    // $bundle = tripal_load_bundle_entity(array('name' => $entity->bundle));
-
-    $child_entities = [];
-    $record_id = $entity->chado_record_id;
-
-    $query = db_select('public.chado_bundle', 'tb')
-      ->fields('tb', ['bundle_id', 'type_id', 'data_table'])
-      ->condition('bundle_id', $target_bundle, '=');
-    $target_info = $query->execute()->fetchObject();
-
-    $type_id = $target_info->type_id;
-    $bundle_id = $target_info->bundle_id;
-    $target_chado_table = $target_info->data_table;
-    $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
-
-    $results = NULL;//end query, set to null
-
-
-    $target_record_column = $target_chado_table . "_id";
-
-    if ($entity->chado_table == 'organism') {
-      $query = db_select($target_bundle_table, 'tbt');
-      $query->fields('tbt', ['entity_id']);
-      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
-      $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
-      $query->fields('te', ['title']);
-      if ($target_chado_table == 'biomaterial') {
-        $query->condition('tct.taxon_id', $record_id, '=');
-      }
-      else {
-        //works with feature in mind, and will work when chado table has organism_id column
-        $query->condition('tct.organism_id', $record_id, '=');
-      }
-      $results = $query->execute()
-        ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
-    }
-    if ($entity->chado_table == 'analysis') {
-      return NULL;
-      //we dont know what we're doing!
-      $query = db_select($target_bundle_table, 'tbt');
-      $query->fields('tbt', ['entity_id']);
-      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
-      $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
-      $query->fields('te', ['title']);
-    }
-    if ($results) {
-      $child_entities[$target_bundle_table] = $results;
-    }
-    return $child_entities;
-  }
-
 
   public function instanceSettingsForm() {
 

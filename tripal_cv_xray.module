@@ -34,14 +34,16 @@ function tripal_cv_xray_menu() {
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   );
 
-  $items['cv_entities/lookup/%/%/children'] = array(
+  $items['cv_entities/lookup/%/%/%/%/children'] = array(
     'access arguments' => array('access content'),
-    'page callback' => 'data__ontology_data_formatter::tripal_cv_xray_entity_child_lookup_ajax',
-    'page arguments' => array(2, 3),
-    'file' => 'includes/tripal_cv_xray_entity_results.inc',
-    'file path' => drupal_get_path('module', 'tripal'),
+    'page callback' => 'tripal_cv_xray_entity_child_lookup_ajax',
+    'page arguments' => array(2, 3, 4, 5),
+    //$vocabulary, $accession, $target_bundle_id, $anchor_entity_id)
+    'file' => 'includes/api/tripal_cv_xray.api.inc',
+    'file path' => drupal_get_path('module', 'tripal_cv_xray'),
     'type' => MENU_CALLBACK,
   );
+
 
   return $items;
 
