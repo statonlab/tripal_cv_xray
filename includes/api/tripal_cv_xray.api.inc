@@ -9,14 +9,14 @@ function tripal_cv_xray_cvterm_entity_job() {
 }
 
 
-/**
- * Updates provided entities with all CVs.
- * @param $entities
- */
-function tripal_cv_xray_cvterm_entity_specific_update($entities) {
-  $converter = new ChadoEntityChildCvterm();
-  $converter->update_specific_entities($entities);
-}
+///**
+// * Updates provided entities with all CVs.
+// * @param $entities
+// */
+//function tripal_cv_xray_cvterm_entity_specific_update($entities) {
+//  $converter = new ChadoEntityChildCvterm();
+//  $converter->update_specific_entities($entities);
+//}
 
 
 /**

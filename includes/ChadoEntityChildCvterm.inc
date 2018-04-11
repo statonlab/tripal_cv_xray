@@ -128,14 +128,14 @@ class ChadoEntityChildCvterm {
     $ancestors = [];
 
     $query = db_select("chado.cvtermpath", 't')
-      ->fields('t', ['object_id', 'pathdistance']);
-    $query->condition('subject_id', $cvterm);
-    //question: should we do an inner join here to ensure that the CV ID is the same in both subject and object?
+      ->fields('t', ['subject_id', 'pathdistance']);
+    $query->condition('object_id', $cvterm);
+
+    //all subjects are related to some object
     $query->execute();
 
-
     foreach ($query as $result) {
-      $new_term = $result->object_id;
+      $new_term = $result->subject_id;
       $path = $result->pathdistance;
       $ancestors[$new_term]["path_length"] = $path;
     }
