@@ -14,8 +14,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
   // The list of field types for which this formatter is appropriate.
   public static $field_types = array('data__ontology_data');
 
-  private $entity_term_map = NULL;
-
   // The list of default settings for this formatter.
   public static $default_settings = array(
     'setting1' => 'default_value',
@@ -92,7 +90,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
 
     $child_entities = $items[0]['value'];
     $vocabulary_name = $items[0]['cv']['short_name'];
-    $vocabulary_id = $items[0]['cv']['id'];
     $target_bundle_id = $items[0]['target'];
 
     if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])) {
@@ -116,6 +113,8 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     }
     $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
 
+
+    //TODO: this is redundant with API
     $items = $this->field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps);
 
     if (count($root_terms) == 0) {

@@ -102,13 +102,15 @@ class data__ontology_data extends TripalField {
 
     $entity->{$field_name}['und'][0]['value'] = NULL;
 
-if (!isset($this->instance['settings']['container'])) {
-	return NULL;
-}
+    if (!isset($this->instance['settings']['container'])) {
+      return NULL;
+    }
 
     $settings = $this->instance['settings']['container'];
 
-    $cv_id = $settings['CV'];
+
+    // $cv_id = $settings['CV'];
+    $cv_shortname = $settings['ontology'];
 
 
     $target_bundle = $settings['target_bundle'];
@@ -118,17 +120,9 @@ if (!isset($this->instance['settings']['container'])) {
     $child_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
 
-
-    $query = db_select("chado.db2cv_mview", 'DBCV')
-      ->fields("DBCV", ['dbname'])
-      ->condition('cv_id', $cv_id);
-    $cv_shortname = $query->execute()->fetchField();
-
-
     //just entities
     $entity->{$field_name}['und'][0]['value'] = $child_entities;
     $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
-    $entity->{$field_name}['und'][0]['cv']['id'] = $cv_id;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
   }
 
@@ -173,41 +167,39 @@ Before you can use this field, you must choose which CV to display, and what ent
       'SIO',
     ];
 
-    $results = db_select("chado.cv", 'CV')
-      ->fields("CV", ["cv_id", "name"])
-      ->condition("name", $reasonable_cvs, 'IN')
-      ->execute();
-    $cv_options = [];
-    foreach ($results as $result) {
-      $cv_options[$result->cv_id] = $result->name;
-    }
+    $ontologies = db_select("public.tripal_cvterm_entity_index", "t")
+      ->fields("t", ["database"])
+      ->distinct()
+      ->execute()
+      ->fetchAssoc();
 
-    // Add in all the general settings
-    //-------------------------------------------
-    $element['container']['CV'] = array(
+
+    $element['container']['ontology'] = array(
       '#type' => 'select',
-      '#title' => 'CV',
-      '#description' => 'The CV you would like to map entities to.',
-      '#options' => $cv_options,
+      '#title' => 'Ontology',
+      '#description' => 'The ontology you would like to map entities to.',
+      '#options' => $ontologies,
     );
 
-    if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
-      $base_tables = ["feature", "biomaterial"];
-    }
-
+    $query = db_select("public.tripal_cvterm_entity_index", "tcei")
+      ->fields("tcei", ["bundle_id"])
+      ->distinct();
+    $query->join("public.tripal_bundle", "tb", "tb.term_id = tcei.bundle_id");
+    $query->fields("tb", ["label"]);
+    $bundles = $query->execute()
+      ->fetchAll();
     $target_bundles = [];
 
-    $query = db_select("public.chado_bundle", 'CB')
-      ->fields("CB", ["bundle_id", "data_table"])
-      ->condition("data_table", $base_tables, 'IN');
-    $query->join("public.tripal_bundle", "TB", "CB.bundle_id = TB.id");
-    $results = $query->fields("TB", ["label"])
-      ->execute();
-
-    foreach ($results as $result) {
-      $target_bundles[$result->bundle_id] = $result->label;
+    foreach ($bundles as $bundle) {
+  $bundle_id = $bundle->bundle_id;
+  $label = $bundle->label;
+  $target_bundles[$bundle_id] = $label;
     }
 
+    if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
+    //  $base_tables = ["feature", "biomaterial"];
+    }
+    
     $element['container']['target_bundle'] = array(
       '#type' => 'select',
       '#title' => 'Target Bundle to Map Onto CV Tree',
