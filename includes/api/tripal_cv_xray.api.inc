@@ -122,7 +122,7 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
  * Given an entity (the anchor entity), retrieve all entities that map to it of type target bundle.
  *
  * @param $anchor_entity
- * @param $target_bundle
+ * @param $target_bundle_id
  *
  * @return array|null
  */
@@ -134,11 +134,10 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
    $record_id = $entity->chado_record_id;
 
    $query = db_select('public.chado_bundle', 'tb')
-     ->fields('tb', ['bundle_id', 'type_id', 'data_table'])
+     ->fields('tb', ['bundle_id',  'data_table'])
      ->condition('bundle_id', $target_bundle_id, '=');
    $target_info = $query->execute()->fetchObject();
 
-   $type_id = $target_info->type_id;
    $bundle_id = $target_info->bundle_id;
    $target_chado_table = $target_info->data_table;
    $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
@@ -149,6 +148,7 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
    $target_record_column = $target_chado_table . "_id";
 
    if ($entity->chado_table == 'organism') {
+
      $query = db_select($target_bundle_table, 'tbt');
      $query->fields('tbt', ['entity_id']);
      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
@@ -194,7 +194,10 @@ function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $targe
   $entity = tripal_load_entity('TripalEntity', [$anchor_entity_id]);
   //get entity from anchor id
 
+  $entity = array_shift($entity);
+
   $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
+
 
   $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($children, $target_bundle_id, $mapped_entities);
   //format results
