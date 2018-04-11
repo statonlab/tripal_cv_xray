@@ -108,7 +108,9 @@ if (!isset($this->instance['settings']['container'])) {
 
     $settings = $this->instance['settings']['container'];
 
-    $cv_id = $settings['CV'];
+
+   // $cv_id = $settings['CV'];
+    $cv_shortname = $settings['ontology'];
 
 
     $target_bundle = $settings['target_bundle'];
@@ -118,17 +120,9 @@ if (!isset($this->instance['settings']['container'])) {
     $child_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle);
     //this is an array with key 1 = bundle, key 2 = entity ids. (in case we need to filter by bundle type).
 
-
-    $query = db_select("chado.db2cv_mview", 'DBCV')
-      ->fields("DBCV", ['dbname'])
-      ->condition('cv_id', $cv_id);
-    $cv_shortname = $query->execute()->fetchField();
-
-
     //just entities
     $entity->{$field_name}['und'][0]['value'] = $child_entities;
     $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
-    $entity->{$field_name}['und'][0]['cv']['id'] = $cv_id;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
   }
 
@@ -173,23 +167,26 @@ Before you can use this field, you must choose which CV to display, and what ent
       'SIO',
     ];
 
-    $results = db_select("chado.cv", 'CV')
-      ->fields("CV", ["cv_id", "name"])
-      ->condition("name", $reasonable_cvs, 'IN')
-      ->execute();
-    $cv_options = [];
-    foreach ($results as $result) {
-      $cv_options[$result->cv_id] = $result->name;
-    }
+    $ontologies = db_select("public.tripal_cvterm_entity_index", "t")
+      ->fields("t", ["database"])
+      ->distinct()
+      ->execute()
+    ->fetchAssoc();
 
-    // Add in all the general settings
-    //-------------------------------------------
-    $element['container']['CV'] = array(
+
+    $element['container']['ontology'] = array(
       '#type' => 'select',
-      '#title' => 'CV',
-      '#description' => 'The CV you would like to map entities to.',
-      '#options' => $cv_options,
+      '#title' => 'Ontology',
+      '#description' => 'The ontology you would like to map entities to.',
+      '#options' => $ontologies,
     );
+
+//    $bundles = db_select("public.tripal_cvterm_entity_index", "t")
+//      ->fields("t", ["bundle_id"])
+//      ->distinct()
+//      ->execute()
+//      ->fetchAssoc();
+
 
     if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
       $base_tables = ["feature", "biomaterial"];
