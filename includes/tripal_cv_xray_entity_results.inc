@@ -1,4 +1,11 @@
 <?php
+
+/**
+ * @param $anchor_id
+ * @param $entities
+ *
+ * @return string
+ */
 function tripal_cv_xray_entity_view($anchor_id, $entities) {
   $per_page = 20;
   $entities = explode(",", $entities);
