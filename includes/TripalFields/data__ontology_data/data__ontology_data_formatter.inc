@@ -112,11 +112,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $has_root = FALSE;
     }
     $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
-
-
-    //TODO: this is redundant with API
-    $items = $this->field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps);
-
+    $items = tripal_cv_xray_field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps);
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
     }
@@ -164,68 +160,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
 
     $element[0] = $content;
   }
-
-
-  /**
-   * Given a list of children terms, format the tips of the cv tree.
-   *
-   * @param $children
-   *
-   * @return string
-   */
-
-  function field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps) {
-    $map = $onscreen_entity_maps;
-    $items = '<ul id="tripal-cv-lookup-tree">';
-    foreach ($children as $child) {
-
-      $child_name = $child['vocabulary']['short_name'] . ":" . $child['accession'];
-
-      $grand = tripal_get_term_children($child['vocabulary']['short_name'], $child['accession']);
-      $num_grand = count($grand);
-      $items .= '<li vocabulary = "' . $child['vocabulary']['short_name'] . '" ' .
-        'accession = "' . $child['accession'] . '" ' .
-        'children = "' . $num_grand . '" ' .
-        'state = "closed" ' .
-        'class = "cv-lookup-tree-node">';
-      $class = 'tree-node-closed';
-      if ($num_grand == 0) {
-        $class = 'tree-node-single';
-      }
-      $items .= '<i class = "tree-node-icon ' . $class . '"></i>';
-      $items .= l($child['name'], 'cv/lookup/' . $child['vocabulary']['short_name'] . '/' . $child['accession'], array('attributes' => array('target' => '_blank')));
-      if ($child['accession'] != $child['name']) {
-        $items .= ' [' . $child_name . '] ';
-      }
-
-      $child_mapping = NULL;
-      if (isset($map[$child_name])) {
-        $child_mapping = $map[$child_name];
-      }
-      $num_mapped = count($child_mapping);
-
-      if ($num_mapped == 0) {
-        $items .= "";//no message
-      }
-      else {
-        $record_word = "records.";
-        if ($num_mapped == 1) {
-          $record_word = "record.";
-        }
-        //TODO: we want to build a linkout here.  Entity_id isnt exposed for views though.
-        $flattened_entities = implode(",", array_keys($child_mapping));
-        $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' . $anchor_entity_id . '/' . $flattened_entities);
-      }
-      $items .= '</li>';
-    }
-    $items .= '</ul>';
-    if (count($children) == 0) {
-      $items = '';
-    }
-
-    return $items;
-  }
-
 
   /**
    * Provides a summary of the formatter settings.

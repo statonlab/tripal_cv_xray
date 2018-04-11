@@ -96,7 +96,7 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
     $num_mapped = count($child_mapping);
 
     if ($num_mapped == 0) {
-      $items .= "  No associated records.";
+      $items .= "";
     }
     else {
       $record_word = "records.";
