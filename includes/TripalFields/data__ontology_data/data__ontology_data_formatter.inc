@@ -95,7 +95,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     $vocabulary_id = $items[0]['cv']['id'];
     $target_bundle_id = $items[0]['target'];
 
-    if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])){
+    if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])) {
       return NULL;
     }
 
@@ -114,7 +114,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $root_terms = tripal_get_vocabulary_terms($vocabulary_name, 25);
       $has_root = FALSE;
     }
-    $onscreen_entity_maps = $this->lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
+    $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
 
     $items = $this->field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps);
 
@@ -133,7 +133,8 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       'tripal' => array(
         'cv_lookup' => array(
           'vocabulary' => $vocabulary_name,
-          'entities' => $onscreen_entity_maps,
+          'anchor_id' => $entity->id,
+          'target_bundle_id' => $target_bundle_id,
         ),
       ),
     ), 'setting');
@@ -160,7 +161,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
 
     // Add support for our custom tree viewer
     drupal_add_css(drupal_get_path('module', 'tripal') . '/theme/css/tripal.cv_lookup.css');
-    drupal_add_js(drupal_get_path('module', 'tripal') . '/theme/js/tripal.cv_lookup.js', 'file');
+    drupal_add_js(drupal_get_path('module', 'tripal_cv_xray') . '/theme/js/tripal.cv_lookup.js', 'file');
 
     $element[0] = $content;
   }
@@ -168,7 +169,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
 
   /**
    * Given a list of children terms, format the tips of the cv tree.
-   * The field specific functionality here is we
    *
    * @param $children
    *
@@ -258,64 +258,4 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
   public function settingsSummary($view_mode) {
     return '';
   }
-
-  /**
-   * @param $terms
-   * @param $target_bundle
-   * @param $child_entities
-   *
-   * @return array
-   */
-  private function lookup_entities_for_terms($terms, $target_bundle, $child_entities) {
-
-    $child_entity_cvterms = [];
-
-    $target_bundle_table = "public.chado_bio_data_" . $target_bundle;
-
-    foreach ($terms as $term) {
-      $accession = $term["accession"];
-      $short_name = $term["vocabulary"]["short_name"];
-
-      $query = db_select("public.tripal_cvterm_entity_index", "CEI");
-      $query->fields("CEI", [
-        "entities_array",
-      ])
-        ->condition("bundle_id", $target_bundle)
-        ->condition("database", $short_name)
-        ->condition("accession", $accession);
-
-      $ent_array = $query->execute()->fetchField();
-      //Check if null here.
-
-      if (!$ent_array) {
-        continue;
-      }
-
-      $entities_with_term_info = unserialize($ent_array);
-      //NEXT: filter the array to just entities mapped on this instance of the field
-      $mapped_entities = $child_entities[$target_bundle_table];
-      $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
-
-      $key = $short_name . ":" . $accession;
-      $child_entity_cvterms[$key] = $matched;
-    }
-    return ($child_entity_cvterms);
-  }
-
-  
-  /**
-   * Ajax callback for tree.
-   */
-  public static function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession){
-
-    $term = tripal_get_term_details($vocabulary, $accession);
-    $children = tripal_get_term_children($vocabulary, $accession);
-    $response = array(
-      'vocabulary' => $vocabulary,
-      'accession' => $accession,
-      'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps)
-    );
-    drupal_json_output($response);
-  }
-
 }
