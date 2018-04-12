@@ -19,7 +19,6 @@ class ChadoEntityChildCvterm {
 
     foreach ($bundles as $bundle) {
 
-      $cvterm_tracker = [];
       //Right now we're only populating feature and biomaterial.
       //TODO: write more bundle cases.
       if ($bundle->data_table !== "feature" && $bundle->data_table !== "biomaterial") {
@@ -38,6 +37,8 @@ class ChadoEntityChildCvterm {
       //cast as int
 
       while ($position <= $total) {
+        $cvterm_tracker = [];
+
         //all subjects are related to some object
 
         $memory = memory_get_usage();
