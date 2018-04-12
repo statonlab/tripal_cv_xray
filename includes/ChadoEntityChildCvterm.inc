@@ -105,7 +105,7 @@ class ChadoEntityChildCvterm {
 
             //Check if theres an entry for this info
 
-            $pre_existing = db_select("public.tripal_cvterm_entity_index")
+            $pre_existing = db_select("public.tripal_cvterm_entity_index", 't')
               ->fields(
                 ["entities_array"]
               )
