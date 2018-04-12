@@ -27,25 +27,21 @@ class ChadoEntityChildCvterm {
       }
       print ("indexing $bundle->label\n");
 
-      $n = 2000; // Set appropriate chunk size for your dataset.
+      $n = 1; // Set appropriate chunk size for your dataset.
       $position = 0;
 
       $cbd_table = "public.chado_" . $bundle->name;
 
       $total = db_select($cbd_table, 'cbd')->fields('cbd', [
-        'entity_id',
-        'record_id',
-      ])->countQuery()->execute()->fetchAll();
+        null])->countQuery()->execute()->fetchField();
       //cast as int
-
-      $total = (int) $total;
-
+      
       while ( $position <= $total){
         //all subjects are related to some object
 
         $memory = memory_get_usage();
-        echo "Memory at position $position $memory bytes\r";
-        
+        echo "\nMemory at position $position $memory bytes\r";
+
         $entities = db_select($cbd_table, 'cbd')->fields('cbd', [
           'entity_id',
           'record_id',
