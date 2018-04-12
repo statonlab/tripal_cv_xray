@@ -119,7 +119,7 @@ class ChadoEntityChildCvterm {
 
               $serialized_entities = serialize($entities);
 
-              db_update('public.tripal_cvterm_entity_index')
+              db_update('public.tripal_cvterm_entity_index', 't')
                 ->fields([
                   "database" => $database,
                   "accession" => $accession,
