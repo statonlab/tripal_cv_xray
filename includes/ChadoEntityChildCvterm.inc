@@ -106,7 +106,7 @@ class ChadoEntityChildCvterm {
             //Check if theres an entry for this info
 
             $pre_existing = db_select("public.tripal_cvterm_entity_index", 't')
-              ->fields(
+              ->fields('t',
                 ["entities_array"]
               )
               ->condition("cvterm_id", $cvterm)
@@ -119,7 +119,7 @@ class ChadoEntityChildCvterm {
 
               $serialized_entities = serialize($entities);
 
-              db_update('public.tripal_cvterm_entity_index', 't')
+              db_update('public.tripal_cvterm_entity_index')
                 ->fields([
                   "database" => $database,
                   "accession" => $accession,
