@@ -2,26 +2,11 @@
 
 class ChadoEntityChildCvterm {
 
-//
-//  public function update_specific_entities($entities) {
-//
-//    foreach ($entities as $entity) {
-//      $types = NULL;
-//      $eid = $entity->entity_id;
-//      $rid = $entity->record_id;
-//      //directly associated cvterms
-//
-//      //data table needs to coem from entity instead
-//
-//      $cvterms = $this->get_all_associated_cvterms($bundle->data_table, $rid);
-//      //why is this always NULL?
-//      if (!$cvterms) {
-//        continue;
-//      }
-//
-//    }
-//  }
-
+  /**
+   * Fully indexes all entity-CVterm associations.
+   * Currently only feature and biomaterial entities are indexed.
+   *
+   */
 
   public function update_all_entities() {
     //First, empty db
@@ -56,7 +41,6 @@ class ChadoEntityChildCvterm {
         if (!$cvterms) {
           continue;
         }
-
         foreach ($cvterms as $cvterm => $relationship) {
           $cvterm_tracker[$cvterm][$eid]["relationship"] = $relationship;
           $cvterm_tracker[$cvterm][$eid]["path_length"] = 0;
@@ -66,11 +50,10 @@ class ChadoEntityChildCvterm {
       //Loop through the cvterms, retrieve all child terms defined in cvtermpath, and add them in copying the relationship type
       foreach ($cvterm_tracker as $cvterm => $entity_list) {
         $children = $this->fetch_ancestors($cvterm);
+        $entities = array_keys($entity_list);
 
-        //TODO: This code is current untested, need terms with ancestors
         foreach ($children as $child_cvterm => $ancestor_info) {
           //add each individual ancestor term
-          $entities = array_keys($entity_list);
           foreach ($entities as $entity) {
             $cvterm_tracker[$child_cvterm][$entity]["path_length"] = $ancestor_info["path_length"];
             $cvterm_tracker[$child_cvterm][$entity]["relationship"] = $cvterm_tracker[$cvterm][$entity]["relationship"];
@@ -84,11 +67,8 @@ class ChadoEntityChildCvterm {
 
         //look up db and accession for cvterm
 
-        // $full_term = tripal_get_cvterm(array('cvterm_id' => $cvterm));
-        //$full_term = chado_expand_var($full_term, 'foreign_key', "cvterm.dbxref_id");
 
         $query = db_select("chado.cvterm", "CVT");
-        //$query->join("chado.cvterm_dbxref", "CVTDBX", "CVT.cvterm_id = CVTDBX.cvterm_id");
         $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
         $query->fields("DBX", ["accession"]);
         $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
@@ -132,9 +112,9 @@ class ChadoEntityChildCvterm {
     $query->condition('object_id', $cvterm);
 
     //all subjects are related to some object
-    $query->execute();
+    $results = $query->execute()->fetchAll();
 
-    foreach ($query as $result) {
+    foreach ($results as $result) {
       $new_term = $result->subject_id;
       $path = $result->pathdistance;
       $ancestors[$new_term]["path_length"] = $path;
@@ -285,4 +265,24 @@ class ChadoEntityChildCvterm {
     return $records;
   }
 
+
+//
+//  public function update_specific_entities($entities) {
+//
+//    foreach ($entities as $entity) {
+//      $types = NULL;
+//      $eid = $entity->entity_id;
+//      $rid = $entity->record_id;
+//      //directly associated cvterms
+//
+//      //data table needs to coem from entity instead
+//
+//      $cvterms = $this->get_all_associated_cvterms($bundle->data_table, $rid);
+//      //why is this always NULL?
+//      if (!$cvterms) {
+//        continue;
+//      }
+//
+//    }
+//  }
 }
