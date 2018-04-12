@@ -27,16 +27,17 @@ class ChadoEntityChildCvterm {
       }
       print ("indexing $bundle->label\n");
 
-      $n = 1; // Set appropriate chunk size for your dataset.
+      $n = 100; // Set appropriate chunk size for your dataset.
       $position = 0;
 
       $cbd_table = "public.chado_" . $bundle->name;
 
       $total = db_select($cbd_table, 'cbd')->fields('cbd', [
-        null])->countQuery()->execute()->fetchField();
+        NULL,
+      ])->countQuery()->execute()->fetchField();
       //cast as int
-      
-      while ( $position <= $total){
+
+      while ($position <= $total) {
         //all subjects are related to some object
 
         $memory = memory_get_usage();
@@ -64,52 +65,84 @@ class ChadoEntityChildCvterm {
           }
         }
         $position += $n;
-      }
 
-      //Loop through the cvterms, retrieve all child terms defined in cvtermpath, and add them in copying the relationship type
-      foreach ($cvterm_tracker as $cvterm => $entity_list) {
-        $children = $this->fetch_ancestors($cvterm);
-        $entities = array_keys($entity_list);
 
-        foreach ($children as $child_cvterm => $ancestor_info) {
-          //add each individual ancestor term
-          foreach ($entities as $entity) {
-            $cvterm_tracker[$child_cvterm][$entity]["path_length"] = $ancestor_info["path_length"];
-            $cvterm_tracker[$child_cvterm][$entity]["relationship"] = $cvterm_tracker[$cvterm][$entity]["relationship"];
+        //Loop through the cvterms, retrieve all child terms defined in cvtermpath, and add them in copying the relationship type
+        foreach ($cvterm_tracker as $cvterm => $entity_list) {
+          $children = $this->fetch_ancestors($cvterm);
+          $entities = array_keys($entity_list);
+
+          foreach ($children as $child_cvterm => $ancestor_info) {
+            //add each individual ancestor term
+            foreach ($entities as $entity) {
+              $cvterm_tracker[$child_cvterm][$entity]["path_length"] = $ancestor_info["path_length"];
+              $cvterm_tracker[$child_cvterm][$entity]["relationship"] = $cvterm_tracker[$cvterm][$entity]["relationship"];
+            }
           }
         }
-      }
-
-      //Insert into public.tripal_cvterm_entity_index
-
-      foreach ($cvterm_tracker as $cvterm => $entities) {
-
-        //look up db and accession for cvterm
 
 
-        $query = db_select("chado.cvterm", "CVT");
-        $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
-        $query->fields("DBX", ["accession"]);
-        $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
-        $query->fields("DB", ["name"]);
-        $query->condition("CVT.cvterm_id", $cvterm);
+        //Insert into public.tripal_cvterm_entity_index
 
-        $full_term = $query->execute()->fetchObject();
+        foreach ($cvterm_tracker as $cvterm => $entities) {
 
-        if ($full_term) {
-          $accession = $full_term->accession;
-          $database = $full_term->name;
+          //look up db and accession for cvterm
 
-          $serialized_entities = serialize($entities);
-          db_insert("public.tripal_cvterm_entity_index")
-            ->fields([
-              "cvterm_id" => $cvterm,
-              "database" => $database,
-              "accession" => $accession,
-              "bundle_id" => $bundle->id,
-              "entities_array" => $serialized_entities,
-            ])
-            ->execute();
+          $query = db_select("chado.cvterm", "CVT");
+          $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
+          $query->fields("DBX", ["accession"]);
+          $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
+          $query->fields("DB", ["name"]);
+          $query->condition("CVT.cvterm_id", $cvterm);
+
+          $full_term = $query->execute()->fetchObject();
+
+          if ($full_term) {
+            $accession = $full_term->accession;
+            $database = $full_term->name;
+
+
+            //Check if theres an entry for this info
+
+            $pre_existing = db_select("public.tripal_cvterm_entity_index")
+              ->fields(
+                ["entities_array"]
+              )
+              ->condition("cvterm_id", $cvterm)
+              ->condition("bundle_id", $bundle->id)
+              ->execute()->fetchField();
+
+            if ($pre_existing) {
+              $pre_existing = unserialize($pre_existing);
+              $entities = array_merge($pre_existing, $entities);
+
+              $serialized_entities = serialize($entities);
+
+              db_update('public.tripal_cvterm_entity_index')
+                ->fields([
+                  "database" => $database,
+                  "accession" => $accession,
+                  "entities_array" => $serialized_entities,
+                ])
+                ->condition('bundle_id', $bundle->id)
+                ->condition('cvterm_id', $cvterm)
+                ->execute();
+            }
+
+            else {
+              $serialized_entities = serialize($entities);
+
+              db_insert("public.tripal_cvterm_entity_index")
+                ->fields([
+                  "cvterm_id" => $cvterm,
+                  "database" => $database,
+                  "accession" => $accession,
+                  "bundle_id" => $bundle->id,
+                  "entities_array" => $serialized_entities,
+                ])
+                ->execute();
+            }
+          }
         }
       }
     }
@@ -127,11 +160,11 @@ class ChadoEntityChildCvterm {
     $ancestors = [];
 
 
-      $query = db_select("chado.cvtermpath", 't')
-        ->fields('t', ['subject_id', 'pathdistance']);
-      $query->condition('object_id', $cvterm);
-      //all subjects are related to some object
-      $results = $query->execute()->fetchAll();
+    $query = db_select("chado.cvtermpath", 't')
+      ->fields('t', ['subject_id', 'pathdistance']);
+    $query->condition('object_id', $cvterm);
+    //all subjects are related to some object
+    $results = $query->execute()->fetchAll();
 
     foreach ($results as $result) {
       $new_term = $result->subject_id;
@@ -226,6 +259,7 @@ class ChadoEntityChildCvterm {
 
     return $out;
   }
+
   /**
    * Gets array of all Tripal bundle entities
    *
