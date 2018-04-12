@@ -50,11 +50,10 @@ class ChadoEntityChildCvterm {
       //Loop through the cvterms, retrieve all child terms defined in cvtermpath, and add them in copying the relationship type
       foreach ($cvterm_tracker as $cvterm => $entity_list) {
         $children = $this->fetch_ancestors($cvterm);
-        //TODO: This code is current untested, need terms with ancestors
+        $entities = array_keys($entity_list);
 
         foreach ($children as $child_cvterm => $ancestor_info) {
           //add each individual ancestor term
-          $entities = array_keys($entity_list);
           foreach ($entities as $entity) {
             $cvterm_tracker[$child_cvterm][$entity]["path_length"] = $ancestor_info["path_length"];
             $cvterm_tracker[$child_cvterm][$entity]["relationship"] = $cvterm_tracker[$cvterm][$entity]["relationship"];
@@ -68,11 +67,8 @@ class ChadoEntityChildCvterm {
 
         //look up db and accession for cvterm
 
-        // $full_term = tripal_get_cvterm(array('cvterm_id' => $cvterm));
-        //$full_term = chado_expand_var($full_term, 'foreign_key', "cvterm.dbxref_id");
 
         $query = db_select("chado.cvterm", "CVT");
-        //$query->join("chado.cvterm_dbxref", "CVTDBX", "CVT.cvterm_id = CVTDBX.cvterm_id");
         $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
         $query->fields("DBX", ["accession"]);
         $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
