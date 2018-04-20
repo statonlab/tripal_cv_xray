@@ -157,17 +157,8 @@ Before you can use this field, you must choose which CV to display, and what ent
 </p> </div>',
     );
 
-    $reasonable_cvs = [
-      'INTERPRO',
-      'EDAM',
-      'biological_process',
-      'molecular_function',
-      'cellular_component',
-      'sequence',
-      'SIO',
-    ];
 
-    $ontologies = db_select("public.tripal_cvterm_entity_index", "t")
+    $ontologies = db_select("public.tripal_cvterm_entity_linker", "t")
       ->fields("t", ["database"])
       ->distinct()
       ->execute()
@@ -185,14 +176,22 @@ Before you can use this field, you must choose which CV to display, and what ent
       '#options' => $ontology_options,
     );
 
-    $query = db_select("public.tripal_cvterm_entity_index", "tcei")
-      ->fields("tcei", ["bundle_id"])
-      ->distinct();
-    $query->join("public.tripal_bundle", "tb", "tb.term_id = tcei.bundle_id");
-    $query->fields("tb", ["label"]);
-    $bundles = $query->execute()
-      ->fetchAll();
-    $target_bundles = [];
+//    $query = db_select("public.tripal_cvterm_entity_linker", "tcei")
+//      ->fields("tcei", ["bundle_id"])
+//      ->distinct();
+//    $query->join("public.tripal_bundle", "tb", "tb.term_id = tcei.bundle_id");
+//    $query->fields("tb", ["label"]);
+//    $bundles = $query->execute()
+//      ->fetchAll();
+
+
+    $query = db_select("public.chado_bundle", 'CB')
+      ->fields('CB', ['bundle_id' ]);
+    $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.bundle_id');
+    $query->fields('TB', ['label']);
+    $bundles = $query->execute()->FetchAll();
+
+   $target_bundles = [];
 
     foreach ($bundles as $bundle) {
   $bundle_id = $bundle->bundle_id;
