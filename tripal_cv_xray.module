@@ -23,12 +23,14 @@ function tripal_cv_xray_menu() {
   ];
 
 
-  $items['cv_entities/%/%'] = array(
+  //http://localhost:8083/cv_entities/SO/0000704/1/7
+
+  $items['cv_entities/%/%/%/%'] = array(
     'type' => MENU_NORMAL_ITEM,
     'title' => t('Matching Entities'),
     'description' => 'Mapped entities associated with a CVterm',
     'page callback' => 'tripal_cv_xray_entity_view',
-    'page arguments' => array(1, 2), //cv and entity array
+    'page arguments' => array(1, 2, 3, 4), //db shortname, accession, anchor entity ID, mapping bundle ID
     'file' => 'includes/tripal_cv_xray_entity_results.inc',
     'access arguments' => array('view content'),
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),

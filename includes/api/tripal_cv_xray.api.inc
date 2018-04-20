@@ -16,16 +16,6 @@ function tripal_cv_xray_run_indexer() {
 }
 
 
-///**
-// * Updates provided entities with all CVs.
-// * @param $entities
-// */
-//function tripal_cv_xray_cvterm_entity_specific_update($entities) {
-//  $converter = new ChadoEntityChildCvterm();
-//  $converter->update_specific_entities($entities);
-//}
-
-
 /**
  * looks up all the entities associated with an array of cvterms.
  * 
@@ -61,9 +51,17 @@ function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $ch
 }
 
 
-
-function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps) {
+/**
+ * Builds the item displayed on the tip of the tree for a given term.
+ * @param $anchor_entity_id
+ * @param $children
+ * @param $onscreen_entity_maps
+ *
+ * @return string
+ */
+function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps, $target_bundle_id) {
   $map = $onscreen_entity_maps;
+
   $items = '<ul id="tripal-cv-lookup-tree">';
   foreach ($children as $child) {
 
@@ -82,6 +80,8 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
     }
     $items .= '<i class = "tree-node-icon ' . $class . '"></i>';
     $items .= l($child['name'], 'cv/lookup/' . $child['vocabulary']['short_name'] . '/' . $child['accession'], array('attributes' => array('target' => '_blank')));
+
+
     if ($child['accession'] != $child['name']) {
       $items .= ' [' . $child_name . '] ';
     }
@@ -100,9 +100,17 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
       if ($num_mapped == 1) {
         $record_word = "record.";
       }
-      //TODO: we want to build a linkout here.  Entity_id isnt exposed for views though.
-      $flattened_entities = implode(",", array_keys($child_mapping));
-      $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' . $anchor_entity_id . '/' . $flattened_entities);
+     // $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' . $anchor_entity_id . '/' . $flattened_entities);
+       $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' .
+         $child['vocabulary']['short_name']  . '/' .
+         $child['accession'] . '/' .
+         $anchor_entity_id . '/'
+         . $target_bundle_id
+       // 'page arguments' => array(1, 2, 3, 4), //db shortname, accession, anchor entity ID, mapping bundle ID
+
+       );
+
+
     }
     $items .= '</li>';
   }
@@ -179,6 +187,8 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
 
 
 /**
+ * The AJAX callback used by the js tree to look up the children of a term.
+ *
  * @param $vocabulary
  * @param $accession
  * @param $target_bundle_id
@@ -202,7 +212,7 @@ function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $targe
   $response = array(
     'vocabulary' => $vocabulary,
     'accession' => $accession,
-    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps),
+    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps, $target_bundle_id),
   );
 
   drupal_json_output($response);
