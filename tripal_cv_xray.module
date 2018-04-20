@@ -4,6 +4,7 @@
 
 require_once "includes/ChadoEntityChildCvterm.inc";
 require_once "includes/api/tripal_cv_xray.api.inc";
+require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 
 /**
  * implement hook menu
@@ -23,30 +24,47 @@ function tripal_cv_xray_menu() {
   ];
 
 
+
   //http://localhost:8083/cv_entities/SO/0000704/1/7
 
-  $items['cv_entities/%/%/%/%'] = array(
+  $items['cv_entities/%/%/%/%'] = [
     'type' => MENU_NORMAL_ITEM,
     'title' => t('Matching Entities'),
     'description' => 'Mapped entities associated with a CVterm',
     'page callback' => 'tripal_cv_xray_entity_view',
     'page arguments' => array(1, 2, 3, 4), //db shortname, accession, anchor entity ID, mapping bundle ID
     'file' => 'includes/tripal_cv_xray_entity_results.inc',
-    'access arguments' => array('view content'),
+    'access arguments' => ['view content'],
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
-  );
+  ];
 
-  $items['cv_entities/lookup/%/%/%/%/children'] = array(
-    'access arguments' => array('access content'),
+  $items['cv_entities/lookup/%/%/%/%/children'] = [
+    'access arguments' => ['access content'],
     'page callback' => 'tripal_cv_xray_entity_child_lookup_ajax',
-    'page arguments' => array(2, 3, 4, 5),
+    'page arguments' => [2, 3, 4, 5],
     //$vocabulary, $accession, $target_bundle_id, $anchor_entity_id)
     'file' => 'includes/api/tripal_cv_xray.api.inc',
     'file path' => drupal_get_path('module', 'tripal_cv_xray'),
     'type' => MENU_CALLBACK,
-  );
-
+  ];
 
   return $items;
+}
 
+/**
+ * Implements hook_cron_queue_info().
+ *
+ * Defined queues for use by our module.
+ *
+ * @return array
+ */
+function tripal_cv_xray_cron_queue_info() {
+  $queues = [];
+
+  $queues['tripal_cv_xray'] = [
+    'worker callback' => 'XRayQueue::run',
+    'time' => 60 * 2,
+  ];
+
+  return $queues;
 }
