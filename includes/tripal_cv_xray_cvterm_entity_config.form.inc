@@ -73,7 +73,11 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
 
   $args = [];
   if ($form_state['values']['populate_type'] == "all") {
-    tripal_add_job("populate_cvterm_entity_index", "tripal_cv_xray", "tripal_cv_xray_cvterm_entity_job", $args, $user->uid);
+    //tripal_add_job("populate_cvterm_entity_index", "tripal_cv_xray", "tripal_cv_xray_cvterm_entity_job", $args, $user->uid);
+    $job = new XRayDispatcherJob(500);
+    XRayQueue::dispatch($job);
+    drupal_set_message('Dispatcher job launched successfully.');
+    drupal_set_message('You may run the jobs using `drush cron`');
   }
 }
 
