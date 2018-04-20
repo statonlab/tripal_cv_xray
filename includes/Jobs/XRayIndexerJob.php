@@ -135,9 +135,13 @@ class XRayIndexerJob implements XRayJob {
 
     // Get data
     $cvterms = $this->loadCVTerms($bundle->data_table, $record_ids);
+    $this->loadCVTermPathParents($cvterms);
     $properties = $this->loadProperties($bundle->data_table, $record_ids);
+    $this->loadCVTermPathParents($properties);
     $relatedCvterms = $this->loadRelatedCVTerms($bundle->data_table, $record_ids);
+    $this->loadCVTermPathParents($relatedCvterms);
     $relatedProps = $this->loadRelatedProperties($bundle->data_table, $record_ids);
+    $this->loadCVTermPathParents($relatedProps);
 
     // Index by record id
     $data = [];
@@ -152,6 +156,41 @@ class XRayIndexerJob implements XRayJob {
     }
 
     return $data;
+  }
+
+  /**
+   * Chunk the terms by entity and load all related cvterms.
+   *
+   * @param $terms
+   */
+  public function loadCVTermPathParents(&$terms) {
+    foreach ($terms as $record_id => &$records) {
+      $this->addCVTermPathRelatedTerms($records);
+    }
+  }
+
+  /**
+   * Get all related term for the given cvterms.
+   *
+   * @param $terms
+   */
+  public function addCVTermPathRelatedTerms(&$terms) {
+    $ids = array_map(function ($term) {
+      return $term->cvterm_id;
+    }, $terms);
+    echo count($terms)."\n";
+
+    $query = db_select('chado.cvtermpath', 'CVTP');
+    $query->fields('CVT', ['cvterm_id']);
+    $query->fields('DB', ['name']);
+    $query->fields('DBX', ['accession']);
+    $query->join('chado.cvterm', 'CVT', 'CVTP.object_id = CVT.cvterm_id');
+    $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
+    $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
+    $query->condition('subject_id', $ids, 'IN');
+    $query->isNotNull('DB.name');
+    $terms += $query->execute()->fetchAll();
+    echo "test 123---" . count($terms)."\n";
   }
 
   /**
