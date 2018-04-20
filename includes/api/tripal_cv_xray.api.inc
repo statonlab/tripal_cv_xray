@@ -8,6 +8,13 @@ function tripal_cv_xray_cvterm_entity_job() {
   $converter->update_all_entities();
 }
 
+/**
+ * Run the indexer.
+ */
+function tripal_cv_xray_run_indexer() {
+  CVBrowserIndexer::run();
+}
+
 
 ///**
 // * Updates provided entities with all CVs.
@@ -20,14 +27,15 @@ function tripal_cv_xray_cvterm_entity_job() {
 
 
 /**
- * looks up all the entities assocaited with an array of cvterms
+ * looks up all the entities associated with an array of cvterms.
+ * 
  * @param $terms: An array of term objects
  * @param $target_bundle An integer for the bundle id, ie chado_bio_data_x
  * @param $child_entities  An array of entities keyed by the bundle type.  These should be created by...
  *
  * @return array
  */
- function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $child_entities) {
+function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $child_entities) {
 
   $child_entity_cvterms = [];
 
@@ -37,28 +45,17 @@ function tripal_cv_xray_cvterm_entity_job() {
     $accession = $term["accession"];
     $short_name = $term["vocabulary"]["short_name"];
 
-    $query = db_select("public.tripal_cvterm_entity_index", "CEI");
-    $query->fields("CEI", [
-      "entities_array",
+    $query= db_select("public.tripal_cvterm_entity_linker", "CEL");
+    $query->fields("CEL", [
+      "entity_id",
     ])
-      ->condition("bundle_id", $target_bundle_id)
       ->condition("database", $short_name)
-      ->condition("accession", $accession);
+      ->condition("accession", $accession)
+      ->condition("entity_id", array_keys($child_entities[$target_bundle_table]), "IN");
 
-    $ent_array = $query->execute()->fetchField();
-    //Check if null here.
-
-    if (!$ent_array) {
-      continue;
-    }
-
-    $entities_with_term_info = unserialize($ent_array);
-    //NEXT: filter the array to just entities mapped on this instance of the field
-    $mapped_entities = $child_entities[$target_bundle_table];
-    $matched = array_intersect_key($entities_with_term_info, $mapped_entities);
-
+    $entities = $query->execute()->fetchAllAssoc('entity_id');
     $key = $short_name . ":" . $accession;
-    $child_entity_cvterms[$key] = $matched;
+    $child_entity_cvterms[$key] = $entities;
   }
   return ($child_entity_cvterms);
 }
@@ -126,58 +123,58 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
  *
  * @return array|null
  */
- function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle_id) {
+function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle_id) {
 
-   $entity = $anchor_entity;
+  $entity = $anchor_entity;
 
-   $child_entities = [];
-   $record_id = $entity->chado_record_id;
+  $child_entities = [];
+  $record_id = $entity->chado_record_id;
 
-   $query = db_select('public.chado_bundle', 'tb')
-     ->fields('tb', ['bundle_id',  'data_table'])
-     ->condition('bundle_id', $target_bundle_id, '=');
-   $target_info = $query->execute()->fetchObject();
+  $query = db_select('public.chado_bundle', 'tb')
+    ->fields('tb', ['bundle_id',  'data_table'])
+    ->condition('bundle_id', $target_bundle_id, '=');
+  $target_info = $query->execute()->fetchObject();
 
-   $bundle_id = $target_info->bundle_id;
-   $target_chado_table = $target_info->data_table;
-   $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
+  $bundle_id = $target_info->bundle_id;
+  $target_chado_table = $target_info->data_table;
+  $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
 
-   $results = NULL;//end query, set to null
+  $results = NULL;//end query, set to null
 
 
-   $target_record_column = $target_chado_table . "_id";
+  $target_record_column = $target_chado_table . "_id";
 
-   if ($entity->chado_table == 'organism') {
+  if ($entity->chado_table == 'organism') {
 
-     $query = db_select($target_bundle_table, 'tbt');
-     $query->fields('tbt', ['entity_id']);
-     $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
-     $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
-     $query->fields('te', ['title']);
-     if ($target_chado_table == 'biomaterial') {
-       $query->condition('tct.taxon_id', $record_id, '=');
-     }
-     else {
-       //works with feature in mind, and will work when chado table has organism_id column
-       $query->condition('tct.organism_id', $record_id, '=');
-     }
-     $results = $query->execute()
-       ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
-   }
-   if ($entity->chado_table == 'analysis') {
-     return NULL;
-     //we dont know what we're doing!
-     $query = db_select($target_bundle_table, 'tbt');
-     $query->fields('tbt', ['entity_id']);
-     $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
-     $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
-     $query->fields('te', ['title']);
-   }
-   if ($results) {
-     $child_entities[$target_bundle_table] = $results;
-   }
-   return $child_entities;
- }
+    $query = db_select($target_bundle_table, 'tbt');
+    $query->fields('tbt', ['entity_id']);
+    $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
+    $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
+    $query->fields('te', ['title']);
+    if ($target_chado_table == 'biomaterial') {
+      $query->condition('tct.taxon_id', $record_id, '=');
+    }
+    else {
+      //works with feature in mind, and will work when chado table has organism_id column
+      $query->condition('tct.organism_id', $record_id, '=');
+    }
+    $results = $query->execute()
+      ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
+  }
+  if ($entity->chado_table == 'analysis') {
+    return NULL;
+    //we dont know what we're doing!
+    $query = db_select($target_bundle_table, 'tbt');
+    $query->fields('tbt', ['entity_id']);
+    $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
+    $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
+    $query->fields('te', ['title']);
+  }
+  if ($results) {
+    $child_entities[$target_bundle_table] = $results;
+  }
+  return $child_entities;
+}
 
 
 
