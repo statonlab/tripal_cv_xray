@@ -178,7 +178,10 @@ class XRayIndexerJob implements XRayJob {
     $ids = array_map(function ($term) {
       return $term->cvterm_id;
     }, $terms);
-    echo count($terms)."\n";
+
+    if(empty($ids)) {
+      return;
+    }
 
     $query = db_select('chado.cvtermpath', 'CVTP');
     $query->fields('CVT', ['cvterm_id']);
@@ -187,10 +190,11 @@ class XRayIndexerJob implements XRayJob {
     $query->join('chado.cvterm', 'CVT', 'CVTP.object_id = CVT.cvterm_id');
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
-    $query->condition('subject_id', $ids, 'IN');
+    $query->condition('CVTP.subject_id', $ids, 'IN');
+    $query->addExpression('subject_id');
     $query->isNotNull('DB.name');
-    $terms += $query->execute()->fetchAll();
-    echo "test 123---" . count($terms)."\n";
+    $query->where('subject_id != object_id');
+    $terms += $r = $query->execute()->fetchAll();
   }
 
   /**
