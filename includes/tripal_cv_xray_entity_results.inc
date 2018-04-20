@@ -1,8 +1,13 @@
 <?php
 
 /**
+ * Page for viewing entities mapepd to a specific term from a particular anchor
+ * entity. IE, all the genes with term X:Y for organism Z.
+ *
+ * @param $db_shortname
+ * @param $accession
  * @param $anchor_id
- * @param $entities
+ * @param $mapping_bundle_id
  *
  * @return string
  */
@@ -13,18 +18,23 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $anchor = TripalEntity_load($anchor_id);
 
+  $mapping_entity = tripal_load_bundle_entity(['id' => $mapping_bundle_id]);
+
+  $map_label = $mapping_entity->label;
+
 
   $query = db_select("chado.cvterm", 'CVT');
-    $query->innerjoin('chado.dbxref', 'DBX', 'DBX.dbxref_id = CVT.dbxref_id');
+  $query->innerjoin('chado.dbxref', 'DBX', 'DBX.dbxref_id = CVT.dbxref_id');
   $query->innerjoin('chado.db', 'DB', 'DBX.db_id = DB.db_id');
   $query->fields('CVT', ["cvterm_id"])
-  ->condition('DBX.accession', $accession)
-  ->condition('DB.name', $db_shortname);
+    ->condition('DBX.accession', $accession)
+    ->condition('DB.name', $db_shortname);
 
   $term_id = $query->execute()->fetchField();
 
-  if (!$term_id){
+  if (!$term_id) {
     tripal_set_message("Could not look up term {$db_shortname}:{$accession}", TRIPAL_ERROR);
+
     return;
   }
 
@@ -33,7 +43,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   //load mapped entities
 
-  $entities_all =  tripal_cv_xray_fetch_associated_entities($anchor, $mapping_bundle_id);
+  $entities_all = tripal_cv_xray_fetch_associated_entities($anchor, $mapping_bundle_id);
 
 
   //get entities for this cvterm
@@ -42,7 +52,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $entities = $entities[$key];
 
 
-    $content = 'the below entities are related to <a href="/bio_data/' . $anchor_id . '">' . $anchor->title . '</a> and annotated with the selected term in some way.';
+  $content = 'the below ' . $map_label . ' are associated with <a href="/bio_data/' . $anchor_id . '">' . $anchor->title .'</a>';
 
   //load paginated mapped entities
 
@@ -59,10 +69,10 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $rows = [];
   foreach ($loaded_entities as $entity) {
 
-    $item = l($entity->title, "/bio_data/" . $entity->id);
-    $rows[] = [$item];
+    $name = l($entity->title, "/bio_data/" . $entity->id);
+    $rows[] = [$name];
   }
-  $table = theme('table', ['header' => ['Entity'], 'rows' => $rows]);
+  $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
   $content .= $table;
   $content .= $pager;
 
