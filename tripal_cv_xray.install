@@ -1,15 +1,77 @@
 <?php
-
 /**
-*Hook Schema
-*/
-
+ * Hook Schema
+ */
 function tripal_cv_xray_schema() {
-$schema = [];
+  $schema = [];
 
   $schema['tripal_cvterm_entity_index'] = tripal_cvterm_entity_index_schema();
+  $schema['tripal_cvterm_entity_linker'] = tripal_cvterm_entity_linker();
 
-return $schema;
+  return $schema;
+}
+
+/**
+ * Get linker table schema.
+ *
+ * @return array
+ */
+function tripal_cvterm_entity_linker() {
+  $schema = [
+    'description' => 'This table is used for tracking cvterm annotations.',
+    'fields' => [
+      'cvterm_entity_id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'cvterm_id' => [
+        'description' => 'chado cvterm id',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'database' => [
+        'description' => 'Database shortname for term.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+      ],
+      'accession' => [
+        'description' => 'Term accession.',
+        'type' => 'varchar',
+        'not null' => TRUE,
+      ],
+
+      'entity_id' => [
+        'description' => 'entity id',
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => [
+      'cvterm_entity_id',
+    ],
+    'indexes' => [
+      'cvterm_id_index' => ['cvterm_id'],
+      'entity_id_index' => ['entity_id'],
+      'accession_index' => ['accession'],
+      'db_index' => ['database'],
+    ],
+    'foreign keys' => [
+      'cvterm' => [
+        'table' => 'cvterm',
+        'columns' => [
+          'uid' => 'cvterm_id',
+        ],
+      ],
+      'entity_id' => [
+        'table' => 'tripal_entity',
+        'columns' => [
+          'uid' => 'id',
+        ],
+      ],
+    ],
+  ];
+
+  return $schema;
 
 }
 
@@ -23,62 +85,79 @@ return $schema;
  * @return array
  */
 function tripal_cvterm_entity_index_schema() {
-
-  $schema = array(
+  $schema = [
     'description' => 'This table is used for tracking cvterm annotations.',
-    'fields' => array(
-      'cvterm_entity_id' => array(
+    'fields' => [
+      'cvterm_entity_id' => [
         'type' => 'serial',
         'not null' => TRUE,
-      ),
-      'cvterm_id' => array(
+      ],
+      'cvterm_id' => [
         'description' => 'chado cvterm id',
         'type' => 'int',
         'not null' => TRUE,
-      ),
-      'database' => array(
+      ],
+      'database' => [
         'description' => 'Database shortname for term.',
         'type' => 'varchar',
         'not null' => TRUE,
-      ),
-      'accession' => array(
+      ],
+      'accession' => [
         'description' => 'Term accession.',
         'type' => 'varchar',
         'not null' => TRUE,
-      ),
-      'bundle_id' => array(
+      ],
+      'bundle_id' => [
         'description' => 'Bundle table.',
         'type' => 'int',
         'not null' => TRUE,
-      ),
-      'entities_array' => array(
+      ],
+      'entities_array' => [
         'description' => 'Entities associated with this term and all child terms',
         'type' => 'text',
         'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array(
+      ],
+    ],
+    'primary key' => [
       'cvterm_entity_id',
-    ),
-    'indexes' => array(
-      'accession' => array('accession'),
-      'db' => array('database'),
-    ),
-    'foreign keys' => array(
-      'cvterm' => array(
+    ],
+    'indexes' => [
+      'accession' => ['accession'],
+      'db' => ['database'],
+    ],
+    'foreign keys' => [
+      'cvterm' => [
         'table' => 'cvterm',
-        'columns' => array(
+        'columns' => [
           'uid' => 'cvterm_id',
-        ),
-      ),
-    ),
-  );
+        ],
+      ],
+    ],
+  ];
 
   return $schema;
-
 }
 
+/**
+ * Uninstall
+ */
+function tripal_cv_xray_uninstall() {
+  if (db_table_exists('tripal_cvterm_entity_index')) {
+    db_drop_table("tripal_cvterm_entity_index");
+  }
 
-function tripal_cv_xray_uninstall(){
-  db_drop_table("public.tripal_cvterm_entity_index");
+  if (db_table_exists('tripal_cvterm_entity_linker')) {
+    db_drop_table('tripal_cvterm_entity_linker');
+  }
+}
+
+/**
+ * Create linker table if missing.
+ */
+function tripal_cv_xray_update_7100() {
+  if (!db_table_exists('tripal_cvterm_entity_linker')) {
+    $schema = tripal_cvterm_entity_linker();
+
+    db_create_table('tripal_cvterm_entity_linker', $schema);
+  }
 }
