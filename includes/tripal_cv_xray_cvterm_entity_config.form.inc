@@ -45,9 +45,8 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#type' => 'tableselect',
     '#header' => $header,
     '#options' => $rows,
+    '#prefix' => '<p>Select a CV to index.  Only index CVs which you will create browsers for.</p>',
   ];
-
-
   $supported_tables = ['biomaterial', 'feature'];
 
   $query = db_select("public.chado_bundle", 'CB')
@@ -69,6 +68,7 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#type' => 'tableselect',
     '#header' => ['Bundle Label'],
     '#options' => $bundle_rows,
+    '#prefix' => '<p>Select a bundle to index.  These are the entities which will be associated with nodes on the CV tree.  For example, if mapping genes to an organism, select the gene bundle.</p>',
   ];
 
 
