@@ -39,9 +39,17 @@ class XRayIndexerJob implements XRayJob {
 
   /**
    * The CV shortnames to index.
+   *
    * @var array
    */
   protected $cv_shortnames;
+
+  /**
+   * Existing tables.
+   *
+   * @var array
+   */
+  protected $tables;
 
   /**
    * Create a new indexing job.
@@ -54,7 +62,7 @@ class XRayIndexerJob implements XRayJob {
     $this->bundle = $bundle;
     $this->cv_shortnames = $cv_shortnames;
 
-    if (!$cv_shortnames){
+    if (!$cv_shortnames) {
 
     }
   }
@@ -224,7 +232,7 @@ class XRayIndexerJob implements XRayJob {
    */
   public function loadCVTerms($table, $record_ids) {
     $cvterm_table = "chado.{$table}_cvterm";
-    if (!db_table_exists($cvterm_table)) {
+    if (!$this->tableExists($cvterm_table)) {
       return [];
     }
 
@@ -239,7 +247,6 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
- //   $query->condition('DB.name', 'null', '!=');
     $query->condition('DB.name', $this->cv_shortnames, 'IN');
 
     $query->isNotNull('DB.name');
@@ -274,8 +281,6 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
-  //  $query->condition('DB.name', 'null', '!=');
-   // $query->isNotNull('DB.name');
     $query->condition('DB.name', $this->cv_shortnames, 'IN');
 
     $properties = $query->execute()->fetchAll();
@@ -302,7 +307,6 @@ class XRayIndexerJob implements XRayJob {
 
     $cvterms_by_subject = $this->loadRelatedCvtermsBy('subject_id', $table, $record_ids);
     $cvterms_by_object = $this->loadRelatedCvtermsBy('object_id', $table, $record_ids);
-
 
     foreach ($cvterms_by_object as $cvterm) {
       // avoid inserting duplicate cvterm ids
@@ -334,6 +338,10 @@ class XRayIndexerJob implements XRayJob {
    */
   public function loadRelatedCvtermsBy($column, $table, $record_ids) {
     $cvterm_table = "chado.{$table}_cvterm";
+    if (!$this->tableExists($cvterm_table)) {
+      return [];
+    }
+
     $relationship_table = "chado.{$table}_relationship";
     $primary_key = $this->primaryKey($table);
     $opposite_column = $column === 'object_id' ? 'subject_id' : 'object_id';
@@ -349,8 +357,6 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
-  //  $query->condition('DB.name', 'null', '!=');
-  //  $query->isNotNull('DB.name');
     $query->condition('DB.name', $this->cv_shortnames, 'IN');
 
 
@@ -416,8 +422,6 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
-   // $query->condition('DB.name', 'null', '!=');
-   // $query->isNotNull('DB.name');
     $query->condition('DB.name', $this->cv_shortnames, 'IN');
 
 
@@ -527,5 +531,21 @@ class XRayIndexerJob implements XRayJob {
     if ($this->verbose) {
       print "$line\n";
     }
+  }
+
+  /**
+   * Checks if a table exists.
+   *
+   * @param $table
+   *
+   * @return mixed
+   */
+  public function tableExists($table) {
+    if (isset($this->tables[$table])) {
+      return $this->tables[$table];
+    }
+
+    $this->tables[$table] = db_table_exists($table);
+    return $this->tables[$table];
   }
 }
