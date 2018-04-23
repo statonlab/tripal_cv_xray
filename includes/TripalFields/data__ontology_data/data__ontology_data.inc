@@ -187,7 +187,7 @@ Before you can use this field, you must choose which CV to display, and what ent
 
     $query = db_select("public.chado_bundle", 'CB')
       ->fields('CB', ['bundle_id' ]);
-    $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.bundle_id');
+    $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.id');
     $query->fields('TB', ['label']);
     $bundles = $query->execute()->FetchAll();
 

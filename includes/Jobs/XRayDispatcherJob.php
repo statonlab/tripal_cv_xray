@@ -3,13 +3,6 @@
 class XRayDispatcherJob implements XRayJob {
 
   /**
-   * Supported chado tables.
-   *
-   * @var array
-   */
-  protected $supportedTables = ['feature'];
-
-  /**
    * Chunk size.
    *
    * @var int
@@ -17,14 +10,34 @@ class XRayDispatcherJob implements XRayJob {
   protected $chunk;
 
   /**
+   * The CV short names that we will index.
+   *
+   * @var array
+   */
+  protected $cv_shortnames;
+
+  /**
+   * The bundle IDs that we will index.  Please note these are the entities that will be mapped onto the anchor.  For example, these are the genes that will be mapped onto organism.
+   *
+   * @var
+   */
+  protected $bundle_ids;
+
+
+  /**
    * XRayDispatcherJob constructor.
    *
    * Create a new dispatcher job.
    *
+   * @param array[int] $bundle_ids
+   * @param array[string] $cv_shortnames
    * @param int $chunk_size
    */
-  public function __construct($chunk_size = 100) {
+  public function __construct($bundle_ids, $cv_shortnames, $chunk_size = 100) {
     $this->chunk = $chunk_size;
+    $this->bundle_ids = $bundle_ids;
+    $this->cv_shortnames = $cv_shortnames;
+
   }
 
   /**
@@ -37,7 +50,7 @@ class XRayDispatcherJob implements XRayJob {
     foreach ($bundles as $bundle) {
       $total = $this->bundleTotal($bundle);
       for ($i = 0; $i < $total; $i += $this->chunk) {
-        $job = new XRayIndexerJob($bundle, TRUE);
+        $job = new XRayIndexerJob($bundle, $this->cv_shortnames, TRUE);
         $job->offset($i)->limit($this->chunk);
         XRayQueue::dispatch($job);
       }
@@ -69,7 +82,7 @@ class XRayDispatcherJob implements XRayJob {
     $query->fields('CB', ['bundle_id', 'data_table']);
     $query->fields('TB', ['label']);
     $query->join('tripal_bundle', 'TB', 'TB.id = CB.bundle_id');
-    $query->condition('data_table', $this->supportedTables, 'IN');
+    $query->condition('bundle_id', $this->bundle_ids, 'IN');
     return $query->execute()->fetchAll();
   }
 

@@ -20,45 +20,87 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#markup' => $welcome,
   ];
 
-  $pop_options = ["all" => "All", "custom" => "Custom"];
-  $form['populate_type'] = [
-    '#type' => 'select',
-    '#options' => $pop_options,
-    '#default' => "all",
-    '#ajax' => [
-      'callback' => 'tripal_cv_xray_pop_callback',
-      'wrapper' => 'div1_wrapper',
-      'effect' => 'fade',
-    ],
-  ];
+  //get all site vocabs
 
-  $form['div1_wrapper'] = [
-    '#type' => 'fieldset',
-    '#prefix' => '<div id="div1_wrapper">',
-    '#suffix' => '</div>',
-  ];
+  $vocabs = tripal_get_vocabularies();
 
+  $rows = [];
 
-  $pop_type = isset($form_state['values']['populate_type']) ? $form_state['values']['populate_type'] : 'all';
+  foreach ($vocabs as $vocab) {
 
-  if ($pop_type == "all") {
+    if ($vocab['num_terms'] < 10) {
+      continue;
+    }
 
-    $form['div1_wrapper']['message'] = [
-      '#markup' => 'This will submit a job that will clear and repopulate the entity:cvterm index.  It will run for all default entity types and CVs.',
+    $rows[$vocab['short_name']] = [
+      $vocab['name'],
+      $vocab['short_name'],
+      $vocab['description'],
     ];
   }
-  if ($pop_type == "custom") {
 
-    $form['div1_wrapper']['message'] = [
-      '#markup' => 'This will allow you to populate a custom entity or CV.  Unfortunately this will get rewritten when all is run again, unless we approach this as a configuration settings...',
-    ];
+  $header = ['Name', 'Short Name', 'Description'];
+
+  $form['cv_select'] = [
+    '#type' => 'tableselect',
+    '#header' => $header,
+    '#options' => $rows,
+  ];
+
+
+  $supported_tables = ['biomaterial', 'feature'];
+
+  $query = db_select("public.chado_bundle", 'CB')
+    ->fields('CB', ['bundle_id']);
+  $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.id');
+  $query->fields('TB', ['label']);
+  $query->condition('CB.data_table', $supported_tables, 'IN');
+  $bundles = $query->execute()->FetchAll();
+
+  $bundle_rows = [];
+
+  foreach ($bundles as $bundle) {
+    $bundle_id = $bundle->bundle_id;
+    $label = $bundle->label;
+    $bundle_rows[$bundle_id] = [$label];
   }
+
+  $form['bundle_select'] = [
+    '#type' => 'tableselect',
+    '#header' => ['Bundle Label'],
+    '#options' => $bundle_rows,
+  ];
+
+
   $form['submit'] = [
     '#type' => 'submit',
     '#value' => 'Populate All',
   ];
 
   return $form;
+}
+
+
+/**
+ * Hook validate for form.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function tripal_cv_xray_cvterm_entity_form_validate($form, &$form_state) {
+  $bundle_ids = $form_state['values']['bundle_select'];
+  $cvs = $form_state['values']['cv_select'];
+
+  $bundle_ids = array_filter($bundle_ids);
+  $cvs = array_filter($cvs);
+
+  if (count($bundle_ids) == 0) {
+    form_set_error("bundle_select", "please select at least one bundle to index.");
+
+  }
+  if (count($cvs) == 0) {
+    form_set_error("cv_select", "please select at least one CV to index.");
+  }
 }
 
 /**
@@ -69,27 +111,13 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
  */
 function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
 
-  global $user;
+  $bundle_ids = $form_state['values']['bundle_select'];
+  $cvs = $form_state['values']['cv_select'];
 
-  $args = [];
-  if ($form_state['values']['populate_type'] == "all") {
-    //tripal_add_job("populate_cvterm_entity_index", "tripal_cv_xray", "tripal_cv_xray_cvterm_entity_job", $args, $user->uid);
-    $job = new XRayDispatcherJob(500);
-    XRayQueue::dispatch($job);
-    drupal_set_message('Dispatcher job launched successfully.');
-    drupal_set_message('You may run the jobs using `drush cron`');
-  }
+  $bundle_ids = array_filter($bundle_ids);
+  $cvs = array_filter($cvs);
+  $job = new XRayDispatcherJob($bundle_ids, $cvs, 500);
+  XRayQueue::dispatch($job);
+  drupal_set_message('Dispatcher job launched successfully.');
+  drupal_set_message('You may run the jobs using `drush cron`');
 }
-
-/**
- * AJAX callback for the run type.
- *
- * @param $form
- * @param $form_state
- *
- * @return mixed
- */
-function tripal_cv_xray_pop_callback($form, &$form_state) {
-  return $form['div1_wrapper'];
-}
-

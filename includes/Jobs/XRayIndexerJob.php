@@ -37,13 +37,21 @@ class XRayIndexerJob implements XRayJob {
    */
   protected $bundle;
 
+
+  /**
+   * The CV shortnames to index.
+   * @var array
+   */
+  protected $cv_shortnames;
+
   /**
    * Create a new indexing job.
    *
    * @param object $bundle
+   * @param array $cv_shortnames
    * @param bool $verbose
    */
-  public function __construct($bundle, $verbose = FALSE) {
+  public function __construct($bundle, $cv_shortnames, $verbose = FALSE) {
     $this->bundle = $bundle;
   }
 
@@ -222,7 +230,9 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
-    $query->condition('DB.name', 'null', '!=');
+ //   $query->condition('DB.name', 'null', '!=');
+    $query->condition('DB.name', $this->cv_shortnames, 'IN');
+
     $query->isNotNull('DB.name');
     $cvterms = $query->execute()->fetchAll();
 
@@ -255,8 +265,10 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
-    $query->condition('DB.name', 'null', '!=');
-    $query->isNotNull('DB.name');
+  //  $query->condition('DB.name', 'null', '!=');
+   // $query->isNotNull('DB.name');
+    $query->condition('DB.name', $this->cv_shortnames, 'IN');
+
     $properties = $query->execute()->fetchAll();
 
     $data = [];
@@ -326,8 +338,10 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
-    $query->condition('DB.name', 'null', '!=');
-    $query->isNotNull('DB.name');
+  //  $query->condition('DB.name', 'null', '!=');
+  //  $query->isNotNull('DB.name');
+    $query->condition('DB.name', $this->cv_shortnames, 'IN');
+
 
     return $query->execute()->fetchAll();
   }
@@ -391,8 +405,10 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
-    $query->condition('DB.name', 'null', '!=');
-    $query->isNotNull('DB.name');
+   // $query->condition('DB.name', 'null', '!=');
+   // $query->isNotNull('DB.name');
+    $query->condition('DB.name', $this->cv_shortnames, 'IN');
+
 
     return $query->execute()->fetchAll();
   }
