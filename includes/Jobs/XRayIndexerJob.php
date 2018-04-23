@@ -224,6 +224,10 @@ class XRayIndexerJob implements XRayJob {
    */
   public function loadCVTerms($table, $record_ids) {
     $cvterm_table = "chado.{$table}_cvterm";
+    if (!db_table_exists($cvterm_table)) {
+      return [];
+    }
+
     $primary_key = $this->primaryKey($table);
 
     $query = db_select($cvterm_table, 'CT');
@@ -295,9 +299,6 @@ class XRayIndexerJob implements XRayJob {
   public function loadRelatedCVTerms($table, $record_ids) {
     $added = [];
     $data = [];
-    if (!db_table_exists($table)) {
-      return $data;
-    }
 
     $cvterms_by_subject = $this->loadRelatedCvtermsBy('subject_id', $table, $record_ids);
     $cvterms_by_object = $this->loadRelatedCvtermsBy('object_id', $table, $record_ids);
