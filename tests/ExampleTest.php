@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use StatonLab\TripalTestSuite\DBTransaction;
 use StatonLab\TripalTestSuite\TripalTestCase;
 
 /**
@@ -13,12 +14,27 @@ use StatonLab\TripalTestSuite\TripalTestCase;
  * @package Tests
  */
 class ExampleTest extends TripalTestCase {
-  /**
-   * Basic test example.
-   * Tests must begin with the word "test".
-   * See https://phpunit.readthedocs.io/en/latest/ for more information.
-   */
+
+  /** @test */
   public function testBasicExample() {
-    $this->assertTrue(true);
+    $dispatcher = new \XRayDispatcherJob();
+    $dispatcher->clearIndexTable();
+
+    $count = (int) db_query('SELECT COUNT(*) FROM tripal_cvterm_entity_linker')->fetchField();
+    $this->assertEquals($count, 0);
+
+    $bundles = $dispatcher->bundles();
+    foreach ($bundles as $bundle) {
+      echo "\nProcessing: chado_bio_data_{$bundle->bundle_id}\n";
+      $total = $dispatcher->bundleTotal($bundle);
+      for ($i = 0; $i < $total; $i += 1) {
+        $job = new \XRayIndexerJob($bundle, TRUE);
+        $job->offset($i)->limit(1);
+        $job->handle();
+      }
+    }
+
+    $count = (int) db_query('SELECT COUNT(*) FROM tripal_cvterm_entity_linker')->fetchField();
+    echo "FINAL COUNT $count\n";
   }
 }

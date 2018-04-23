@@ -28,7 +28,7 @@ class XRayDispatcherJob implements XRayJob {
   }
 
   /**
-   * Creates indexer jobs per bundle as chunks.
+   * Creates indexer jobs per bundle as chunks of entities.
    */
   public function handle() {
     $this->clearIndexTable();
@@ -37,7 +37,8 @@ class XRayDispatcherJob implements XRayJob {
     foreach ($bundles as $bundle) {
       $total = $this->bundleTotal($bundle);
       for ($i = 0; $i < $total; $i += $this->chunk) {
-        $job = new XRayIndexerJob($bundle);
+        $job = new XRayIndexerJob($bundle, TRUE);
+        $job->offset($i)->limit($this->chunk);
         XRayQueue::dispatch($job);
       }
     }
