@@ -114,9 +114,12 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
   $bundle_ids = $form_state['values']['bundle_select'];
   $cvs = $form_state['values']['cv_select'];
 
-  $bundle_ids = array_filter($bundle_ids);
-  $cvs = array_filter($cvs);
+
+  $bundle_ids = array_keys(array_filter($bundle_ids));
+  $cvs = array_keys(array_filter($cvs));
+
   $job = new XRayDispatcherJob($bundle_ids, $cvs, 500);
+
   XRayQueue::dispatch($job);
   drupal_set_message('Dispatcher job launched successfully.');
   drupal_set_message('You may run the jobs using `drush cron`');

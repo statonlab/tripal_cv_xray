@@ -37,7 +37,6 @@ class XRayIndexerJob implements XRayJob {
    */
   protected $bundle;
 
-
   /**
    * The CV shortnames to index.
    * @var array
@@ -53,7 +52,9 @@ class XRayIndexerJob implements XRayJob {
    */
   public function __construct($bundle, $cv_shortnames, $verbose = FALSE) {
     $this->bundle = $bundle;
+    $this->cv_shortnames = $cv_shortnames;
   }
+
 
   /**
    * Starting position.
