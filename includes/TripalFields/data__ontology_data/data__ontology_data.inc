@@ -177,17 +177,18 @@ Before you can use this field, you must choose which CV to display, and what ent
     );
 
 //    $query = db_select("public.tripal_cvterm_entity_linker", "tcei")
-//      ->fields("tcei", ["bundle_id"])
-//      ->distinct();
-//    $query->join("public.tripal_bundle", "tb", "tb.term_id = tcei.bundle_id");
+//      ->fields("tcei", ["entity_id"]);
+//
+//    $query->join("public.tripal_entity", "tb", "tb.id = tcei.bundle_id");
 //    $query->fields("tb", ["label"]);
 //    $bundles = $query->execute()
 //      ->fetchAll();
-
+//
 
     $query = db_select("public.chado_bundle", 'CB')
       ->fields('CB', ['bundle_id' ]);
-    $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.bundle_id');
+    $query->condition('CB.data_table', ['feature', 'biomaterial'], 'IN');
+    $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.id');
     $query->fields('TB', ['label']);
     $bundles = $query->execute()->FetchAll();
 
