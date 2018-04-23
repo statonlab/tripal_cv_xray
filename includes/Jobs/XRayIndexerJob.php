@@ -293,10 +293,15 @@ class XRayIndexerJob implements XRayJob {
    * @return array
    */
   public function loadRelatedCVTerms($table, $record_ids) {
-    $cvterms_by_subject = $this->loadRelatedCvtermsBy('subject_id', $table, $record_ids);
-    $cvterms_by_object = $this->loadRelatedCvtermsBy('object_id', $table, $record_ids);
     $added = [];
     $data = [];
+    if (!db_table_exists($table)) {
+      return $data;
+    }
+
+    $cvterms_by_subject = $this->loadRelatedCvtermsBy('subject_id', $table, $record_ids);
+    $cvterms_by_object = $this->loadRelatedCvtermsBy('object_id', $table, $record_ids);
+
 
     foreach ($cvterms_by_object as $cvterm) {
       // avoid inserting duplicate cvterm ids
