@@ -22,4 +22,9 @@ Tripal CV X-ray provides browseable CV trees with entity counts and links.  It d
 
 # Documentation
 
-Coming soon
+### Indexing entity : CVterm relationships
+
+Cv-X
+CV X-ray needs to associate entities with CVterms beforehand.  
+
+### Creating a field instance

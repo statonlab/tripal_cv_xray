@@ -17,7 +17,7 @@ class ExampleTest extends TripalTestCase {
 
   /** @test */
   public function testBasicExample() {
-    $dispatcher = new \XRayDispatcherJob();
+    $dispatcher = new \XRayDispatcherJob(['6' , '7', '8'], ["GO"],  100);
     $dispatcher->clearIndexTable();
 
     $count = (int) db_query('SELECT COUNT(*) FROM tripal_cvterm_entity_linker')->fetchField();
@@ -28,7 +28,7 @@ class ExampleTest extends TripalTestCase {
       echo "\nProcessing: chado_bio_data_{$bundle->bundle_id}\n";
       $total = $dispatcher->bundleTotal($bundle);
       for ($i = 0; $i < $total; $i += 1) {
-        $job = new \XRayIndexerJob($bundle, TRUE);
+        $job = new \XRayIndexerJob($bundle, ["GO"], TRUE);
         $job->offset($i)->limit(1);
         $job->handle();
       }
