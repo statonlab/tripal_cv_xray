@@ -53,6 +53,10 @@ class XRayIndexerJob implements XRayJob {
   public function __construct($bundle, $cv_shortnames, $verbose = FALSE) {
     $this->bundle = $bundle;
     $this->cv_shortnames = $cv_shortnames;
+
+    if (!$cv_shortnames){
+
+    }
   }
 
 
