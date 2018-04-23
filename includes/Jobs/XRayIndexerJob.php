@@ -54,6 +54,7 @@ class XRayIndexerJob implements XRayJob {
    */
   public function offset($offset) {
     $this->offset = $offset;
+    return $this;
   }
 
   /**
@@ -63,6 +64,7 @@ class XRayIndexerJob implements XRayJob {
    */
   public function limit($limit) {
     $this->chunk = $limit;
+    return $this;
   }
 
   /**
@@ -109,8 +111,9 @@ class XRayIndexerJob implements XRayJob {
     $query->fields('CB', ['entity_id', 'record_id']);
     $query->orderBy('entity_id', 'asc');
     $query->range($this->offset, $this->chunk);
+    $data = $query->execute()->fetchAll();
 
-    return $query->execute()->fetchAll();
+    return $data;
   }
 
   /**
@@ -154,7 +157,6 @@ class XRayIndexerJob implements XRayJob {
         'related_props' => $relatedProps[$entity->record_id] ?: [],
       ];
     }
-
     return $data;
   }
 
@@ -164,8 +166,8 @@ class XRayIndexerJob implements XRayJob {
    * @param $terms
    */
   public function loadCVTermPathParents(&$terms) {
-    foreach ($terms as $record_id => &$records) {
-      $this->addCVTermPathRelatedTerms($records);
+    foreach ($terms as $record_id => $records) {
+      $this->addCVTermPathRelatedTerms($terms[$record_id]);
     }
   }
 
@@ -179,7 +181,7 @@ class XRayIndexerJob implements XRayJob {
       return $term->cvterm_id;
     }, $terms);
 
-    if(empty($ids)) {
+    if (empty($ids)) {
       return;
     }
 
@@ -191,10 +193,11 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('CVTP.subject_id', $ids, 'IN');
+    $query->condition('DB.name', 'null', '!=');
     $query->addExpression('subject_id');
     $query->isNotNull('DB.name');
     $query->where('subject_id != object_id');
-    $terms += $r = $query->execute()->fetchAll();
+    $terms += $query->execute()->fetchAll();
   }
 
   /**
@@ -219,6 +222,7 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
+    $query->condition('DB.name', 'null', '!=');
     $query->isNotNull('DB.name');
     $cvterms = $query->execute()->fetchAll();
 
@@ -251,6 +255,7 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition($primary_key, $record_ids, 'IN');
+    $query->condition('DB.name', 'null', '!=');
     $query->isNotNull('DB.name');
     $properties = $query->execute()->fetchAll();
 
@@ -321,6 +326,7 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
+    $query->condition('DB.name', 'null', '!=');
     $query->isNotNull('DB.name');
 
     return $query->execute()->fetchAll();
@@ -385,6 +391,7 @@ class XRayIndexerJob implements XRayJob {
     $query->join("chado.dbxref", "DBX", "CVT.dbxref_id = DBX.dbxref_id");
     $query->join("chado.db", "DB", "DBX.db_id = DB.db_id");
     $query->condition('RT.' . $column, $record_ids, 'IN');
+    $query->condition('DB.name', 'null', '!=');
     $query->isNotNull('DB.name');
 
     return $query->execute()->fetchAll();
@@ -429,8 +436,8 @@ class XRayIndexerJob implements XRayJob {
       foreach ($related_props as $property) {
         $query->values($this->extractCvtermForInsertion($property, $entity_id));
       }
-
     }
+
     return $query->execute();
   }
 
