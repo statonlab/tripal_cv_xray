@@ -53,3 +53,4 @@ You will be redirected to the field settings page.  Scroll down to the instance 
 ![map type](docs/map_type.png)
 
 Click hte save Settings button at the bottom.  Navigate to the "Manage Display" section of your bundle, and enable your new field.
+

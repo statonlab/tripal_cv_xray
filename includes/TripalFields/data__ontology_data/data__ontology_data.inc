@@ -176,14 +176,6 @@ Before you can use this field, you must choose which CV to display, and what ent
       '#options' => $ontology_options,
     );
 
-//    $query = db_select("public.tripal_cvterm_entity_linker", "tcei")
-//      ->fields("tcei", ["entity_id"]);
-//
-//    $query->join("public.tripal_entity", "tb", "tb.id = tcei.bundle_id");
-//    $query->fields("tb", ["label"]);
-//    $bundles = $query->execute()
-//      ->fetchAll();
-//
 
     $query = db_select("public.chado_bundle", 'CB')
       ->fields('CB', ['bundle_id' ]);
