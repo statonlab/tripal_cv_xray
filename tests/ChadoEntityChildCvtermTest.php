@@ -79,7 +79,7 @@ class entity_child_cvterm_test extends TripalTestCase {
 
     foreach ($features as $feature) {
       $term = $related_terms[array_rand($related_terms)];
-      
+
       factory('chado.feature_cvterm')->create([
         'feature_id' => $feature->feature_id,
         'cvterm_id' => $term->cvterm_id,
@@ -87,7 +87,7 @@ class entity_child_cvterm_test extends TripalTestCase {
     }
 
     $obj = new ChadoEntityChildCvterm();
-    //   $obj->update_all_entities();
+       $obj->update_all_entities();
 
     $result = db_select("public.tripal_cvterm_entity_index", 't')
       ->fields('t')
@@ -119,7 +119,6 @@ class entity_child_cvterm_test extends TripalTestCase {
 
       $count++;
     }
-
     return $cvterms;
 
   }
