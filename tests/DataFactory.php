@@ -51,6 +51,28 @@ Factory::define('chado.cvterm', function (Faker\Generator $faker) {
     ];
 });
 
+
+/** @see  StatonLab\TripalTestSuite\Database\Factory::define() */
+Factory::define('chado.feature_cvterm', function (Faker\Generator $faker) {
+  return [
+    'feature_id' => factory('chado.feature')->create()->feature_id,
+    'cvterm_id' => factory('chado.cvterm')->create()->cvterm_id,
+    'pub_id' => 1,
+    'is_not' => 0,
+    'rank' => 0
+  ];
+});
+
+/** @see  StatonLab\TripalTestSuite\Database\Factory::define() */
+Factory::define('chado.cvterm_relationship', function (Faker\Generator $faker) {
+  return [
+    'type_id' => factory('chado.cvterm')->create(['is_relationshiptype' => 1])->cvterm_id,
+    'subject_id' => factory('chado.cvterm')->create()->cvterm_id,
+    'object_id' => factory('chado.cvterm')->create()->cvterm_id,
+  ];
+});
+
+
 /** @see  StatonLab\TripalTestSuite\Database\Factory::define() */
 Factory::define('chado.organism', function (Faker\Generator $faker) {
     return [
