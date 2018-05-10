@@ -11,13 +11,14 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
 
   // The default label for this field.
   public static $default_label = 'Ontology data';
+
   // The list of field types for which this formatter is appropriate.
-  public static $field_types = array('data__ontology_data');
+  public static $field_types = ['data__ontology_data'];
 
   // The list of default settings for this formatter.
-  public static $default_settings = array(
+  public static $default_settings = [
     'setting1' => 'default_value',
-  );
+  ];
 
   /**
    * Provides the field's setting form.
@@ -61,12 +62,12 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    * This function corresponds to the hook_field_formatter_view()
    * function of the Drupal Field API.
    *
-   *  This function provides the display for a field when it is viewed on
-   *  the web page.  The content returned by the formatter should only include
-   *  what is present in the $items[$delta]['values] array. This way, the
-   *  contents that are displayed on the page, via webservices and downloaded
-   *  into a CSV file will always be identical.  The view need not show all
-   *  of the data in the 'values' array.
+   * This function provides the display for a field when it is viewed on
+   * the web page. The content returned by the formatter should only include
+   * what is present in the $items[$delta]['values] array. This way, the
+   * contents that are displayed on the page, via webservices and downloaded
+   * into a CSV file will always be identical. The view need not show all
+   * of the data in the 'values' array.
    *
    * @param $element
    * @param $entity_type
@@ -75,16 +76,15 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    * @param $items
    * @param $display
    *
-   * @return
+   * @return void
    *    An element array compatible with that returned by the
    *    hook_field_formatter_view() function.
    */
   public function view(&$element, $entity_type, $entity, $langcode, $items, $display) {
-
-    // Get the settings
-    $settings = $display['settings'];
-
-    if (!$items[0]['value']) {
+    if (!isset($items[0])) {
+      return NULL;
+    }
+    elseif (!$items[0]['value']) {
       return NULL;
     }
 
@@ -92,27 +92,28 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     $vocabulary_name = $items[0]['cv']['short_name'];
     $target_bundle_id = $items[0]['target'];
 
-    if (!isset($child_entities['public.chado_bio_data_' . $target_bundle_id])) {
-      return NULL;
-    }
-
-    $vocab = tripal_get_vocabulary_details($vocabulary_name); //short name
+    // Short name
+    $vocab = tripal_get_vocabulary_details($vocabulary_name);
 
     // If we can't find the term then just return a message.
     if (!$vocab) {
       drupal_set_message('The vocabulary ' . $vocabulary_name . ' cannot be found on this site', 'error');
 
-      return '';
+      return;
     }
 
+    // Get the root terms
     $has_root = TRUE;
     $root_terms = tripal_get_vocabulary_root_terms($vocabulary_name);
     if (count($root_terms) == 0) {
       $root_terms = tripal_get_vocabulary_terms($vocabulary_name, 25);
       $has_root = FALSE;
     }
-    $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
-    $items = tripal_cv_xray_field_lookup_term_children_format($entity->id, $root_terms, $onscreen_entity_maps, $target_bundle_id);
+
+    $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms, $target_bundle_id, $entity->id);
+    //$onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($root_terms, $target_bundle_id, $child_entities);
+    $items = tripal_cv_xray_field_lookup_term_children_format($entity->id, $root_terms, $counts, $target_bundle_id);
+
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
     }
@@ -123,35 +124,33 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         'For some vocabularies, only a subset of terms are loaded</p>' . $items;
     }
 
-
-    drupal_add_js(array(
-      'tripal' => array(
-        'cv_lookup' => array(
+    drupal_add_js([
+      'tripal' => [
+        'cv_lookup' => [
           'vocabulary' => $vocabulary_name,
           'anchor_id' => $entity->id,
           'target_bundle_id' => $target_bundle_id,
-        ),
-      ),
-    ), 'setting');
+        ],
+      ],
+    ], 'setting');
 
-
-    $content = array(
-      'vocab_table' => array(
+    $content = [
+      'vocab_table' => [
         '#type' => 'item',
         '#title' => 'Details',
         '#markup' => '<p>A vocabulary is always identified by its short name and sometimes it may offer multiple sub-vocabularies with different names. Both are listed below.</p>',
-      ),
-      'vocab_browser' => array(
+      ],
+      'vocab_browser' => [
         '#type' => 'item',
         '#title' => 'Term Browser',
         '#markup' => $items,
-      ),
-    );
+      ],
+    ];
     if (!$has_root) {
-      $content['pager'] = array(
+      $content['pager'] = [
         '#type' => 'markup',
         '#markup' => theme('pager'),
-      );
+      ];
     }
 
     // Add support for our custom tree viewer
