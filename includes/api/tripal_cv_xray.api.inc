@@ -61,6 +61,8 @@ function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $ch
  * @return array
  */
 function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_id, $entity_id) {
+  // Loading entity here is fine since the static cache holds all of the values
+  // anyway so there won't be any performance issues.
   $entity = tripal_load_entity('TripalEntity', [$entity_id]);
   $entity = reset($entity);
 
