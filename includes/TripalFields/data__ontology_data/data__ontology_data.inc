@@ -210,6 +210,7 @@ class data__ontology_data extends TripalField {
    * @return array|mixed
    */
   public function instanceSettingsForm() {
+    $settings = $this->instance['settings'];
     $bundle = $this->instance["bundle"];
     $bundle_info = tripal_load_bundle_entity(['name' => $bundle]);
     $anchor_base_table = $bundle_info->data_table;
@@ -263,6 +264,7 @@ class data__ontology_data extends TripalField {
       '#title' => 'Ontology',
       '#description' => 'The ontology you would like to map entities to.',
       '#options' => $ontology_options,
+      '#default_value' => isset($settings['container']) ? $settings['container']['ontology'] : NULL,
     ];
 
     $query = db_select("public.chado_bundle", 'CB');
@@ -289,6 +291,7 @@ class data__ontology_data extends TripalField {
       '#title' => 'Target Bundle to Map Onto CV Tree',
       '#description' => 'The entity type you are mapping.  For example, if mapping features to an organism, you would select the feature bundle here.',
       '#options' => $target_bundles,
+      '#default_value' => isset($settings['container']) ? $settings['container']['target_bundle'] : NULL,
     ];
 
     return $element;
