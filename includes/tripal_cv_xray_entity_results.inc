@@ -95,7 +95,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
 
   $content = '<p>The below ' . $map_label . ' are associated with 
-              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated.</p>';
+              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing '.$per_page.' per page.</p>';
 
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
   $content .= $table;
