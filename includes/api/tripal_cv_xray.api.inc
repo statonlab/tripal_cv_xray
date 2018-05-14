@@ -250,7 +250,7 @@ function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $targe
 
   // $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
 
-  $counts = tripal_cv_xray_lookup_entities_for_terms($children, $target_bundle_id, $anchor_entity_id);
+  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id);
 
   // Format results
   $response = [
