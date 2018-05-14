@@ -38,12 +38,6 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $accession = $term["accession"];
   $short_name = $term["vocabulary"]["short_name"];
 
-  $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
-  $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
-
-  $content = '<p>The below ' . $map_label . ' are associated with 
-              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '</p>';
-
   // Load paginated mapped entities
   if ($mapping_entity->data_table === 'biomaterial') {
     $record_field = 'taxon_id';
@@ -95,6 +89,12 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
     $name = l($entity->title, "/bio_data/" . $entity->id);
     $rows[] = [$name];
   }
+
+  $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
+  $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
+
+  $content = '<p>The below ' . $map_label . ' are associated with 
+              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated.</p>';
 
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
   $content .= $table;
