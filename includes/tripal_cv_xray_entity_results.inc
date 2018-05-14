@@ -68,8 +68,8 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession
-              OFFSET :offset LIMIT :limit
-              ORDER BY TCEL.entity_id", [
+              ORDER BY TCEL.entity_id ASC
+              OFFSET :offset LIMIT :limit", [
     ':record_id' => $anchor->chado_record_id,
     ':database' => $short_name,
     ':accession' => $accession,
