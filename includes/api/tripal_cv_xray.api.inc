@@ -27,9 +27,7 @@ function tripal_cv_xray_run_indexer() {
  * @return array
  */
 function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $child_entities) {
-
   $child_entity_cvterms = [];
-
   $target_bundle_table = "public.chado_bio_data_" . $target_bundle_id;
 
   foreach ($terms as $term) {
@@ -48,7 +46,8 @@ function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $ch
     $key = $short_name . ":" . $accession;
     $child_entity_cvterms[$key] = $entities;
   }
-  return ($child_entity_cvterms);
+
+  return $child_entity_cvterms;
 }
 
 /**
@@ -198,7 +197,8 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
   $target_chado_table = $target_info->data_table;
   $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
 
-  $results = NULL;//end query, set to null
+  // End query, set to null
+  $results = NULL;
   $target_record_column = $target_chado_table . "_id";
 
   if ($entity->chado_table == 'organism') {

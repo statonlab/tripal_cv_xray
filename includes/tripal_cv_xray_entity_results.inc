@@ -14,7 +14,8 @@
  */
 function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapping_bundle_id) {
   $per_page = 20;
-  $anchor = TripalEntity_load($anchor_id);
+  $anchor = tripal_load_entity('TripalEntity', [$anchor_id]);
+  $anchor = reset($anchor);
   $mapping_entity = tripal_load_bundle_entity(['id' => $mapping_bundle_id]);
   $map_label = $mapping_entity->label;
 
@@ -34,24 +35,60 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   }
 
   $term = tripal_get_term_details($db_shortname, $accession);
+  $accession = $term["accession"];
+  $short_name = $term["vocabulary"]["short_name"];
 
-  // load mapped entities
-  $entities_all = tripal_cv_xray_fetch_associated_entities($anchor, $mapping_bundle_id);
+  $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
+  $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
 
-
-  // Get entities for this cvterm
-  $entities = tripal_cv_xray_lookup_entities_for_terms([$term], $mapping_bundle_id, $entities_all);
-  $key = $db_shortname . ':' . $accession;
-  $entities = $entities[$key];
-
-  $content = 'the below ' . $map_label . ' are associated with <a href="/bio_data/' . $anchor_id . '">' . $anchor->title . '</a>';
+  $content = '<p>The below ' . $map_label . ' are associated with 
+              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '</p>';
 
   // Load paginated mapped entities
-  $current_page = pager_default_initialize(count($entities), $per_page);
-  $chunks = array_chunk($entities, $per_page, TRUE);
+  if ($mapping_entity->data_table === 'biomaterial') {
+    $record_field = 'taxon_id';
+  }
+  else {
+    $record_field = 'organism_id';
+  }
+
+  $bundle_table = 'chado_bio_data_' . $mapping_bundle_id;
+  $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
+              WHERE CF.{$record_field} = :record_id 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession", [
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+  ])->fetchField();
+
+  $current_page = pager_default_initialize($count, $per_page);
+
+  $entities = db_query("SELECT TCEL.entity_id
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
+              WHERE CF.{$record_field} = :record_id 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession
+              OFFSET :offset LIMIT :limit", [
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+    ':offset' => $current_page * $per_page,
+    ':limit' => $per_page,
+  ])->fetchAll();
+
+  $entities_to_load = [];
+  foreach ($entities as $one) {
+    $entities_to_load[] = $one->entity_id;
+  }
+
   $pager = theme('pager', ['quantity', count($entities)]);
-  $ents_to_view = array_keys($chunks[$current_page]);
-  $loaded_entities = tripal_load_entity('TripalEntity', $ents_to_view, FALSE);
+  $loaded_entities = tripal_load_entity('TripalEntity', $entities_to_load, FALSE);
 
   $rows = [];
   foreach ($loaded_entities as $entity) {
