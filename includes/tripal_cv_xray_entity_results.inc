@@ -61,8 +61,9 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $current_page = pager_default_initialize($count, $per_page);
 
-  $entities = db_query("SELECT TCEL.entity_id
+  $entities = db_query("SELECT TCEL.entity_id, TE.title
               FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {tripal_entity} TE ON TE.id = TCEL.entity_id
               INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
               INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
               WHERE CF.{$record_field} = :record_id 
@@ -77,16 +78,13 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
     ':limit' => $per_page,
   ])->fetchAll();
 
-  $entities_to_load = [];
-  foreach ($entities as $one) {
-    $entities_to_load[] = $one->entity_id;
-  }
-
-  $pager = theme('pager', ['quantity', count($entities_to_load)]);
-  $loaded_entities = tripal_load_entity('TripalEntity', $entities_to_load, FALSE);
+  //  $entities_to_load = [];
+  //  foreach ($entities as $one) {
+  //    $entities_to_load[] = $one->entity_id;
+  //  }
 
   $rows = [];
-  foreach ($loaded_entities as $entity) {
+  foreach ($entities as $entity) {
     $name = l($entity->title, "/bio_data/" . $entity->id);
     $rows[] = [$name];
   }
@@ -95,9 +93,11 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
 
   $content = '<p>The below ' . $map_label . ' are associated with 
-              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing '.$per_page.' per page.</p>';
+              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing ' . $per_page . ' per page.</p>';
 
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
+  $pager = theme('pager', ['quantity', count($entities_to_load)]);
+
   $content .= $table;
   $content .= $pager;
 
