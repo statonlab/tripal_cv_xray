@@ -81,7 +81,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
     $entities_to_load[] = $one->entity_id;
   }
 
-  $pager = theme('pager', ['quantity', $count]);
+  $pager = theme('pager', ['quantity', $count / $per_page]);
   $loaded_entities = tripal_load_entity('TripalEntity', $entities_to_load, FALSE);
 
   $rows = [];
