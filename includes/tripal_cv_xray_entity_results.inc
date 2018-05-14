@@ -61,7 +61,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $current_page = pager_default_initialize($count, $per_page);
 
-  $entities = db_query("SELECT TCEL.entity_id, TE.title
+  $entities = db_query("SELECT TE.id, TE.title
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {tripal_entity} TE ON TE.id = TCEL.entity_id
               INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
@@ -96,7 +96,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
               ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing ' . $per_page . ' per page.</p>';
 
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
-  $pager = theme('pager', ['quantity', count($entities_to_load)]);
+  $pager = theme('pager', ['quantity', count($entities)]);
 
   $content .= $table;
   $content .= $pager;
