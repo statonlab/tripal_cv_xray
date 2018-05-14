@@ -184,7 +184,6 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
  * @return array|null
  */
 function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle_id) {
-
   $entity = $anchor_entity;
 
   $child_entities = [];
@@ -200,12 +199,9 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
   $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
 
   $results = NULL;//end query, set to null
-
-
   $target_record_column = $target_chado_table . "_id";
 
   if ($entity->chado_table == 'organism') {
-
     $query = db_select($target_bundle_table, 'tbt');
     $query->fields('tbt', ['entity_id']);
     $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
@@ -221,6 +217,7 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
     $results = $query->execute()
       ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
   }
+
   if ($entity->chado_table == 'analysis') {
     return NULL;
     //we dont know what we're doing!
@@ -230,9 +227,11 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
     $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
     $query->fields('te', ['title']);
   }
+
   if ($results) {
     $child_entities[$target_bundle_table] = $results;
   }
+
   return $child_entities;
 }
 
