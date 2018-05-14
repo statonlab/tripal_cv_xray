@@ -246,24 +246,18 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
  * @param $anchor_entity_id
  */
 function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id) {
-  $term = tripal_get_term_details($vocabulary, $accession);
+  //$term = tripal_get_term_details($vocabulary, $accession);
   $children = tripal_get_term_children($vocabulary, $accession);
-  //Get entity mapping
-  $entity = tripal_load_entity('TripalEntity', [$anchor_entity_id]);
-  //get entity from anchor id
 
-  $entity = array_shift($entity);
+  // $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
 
-  $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
+  $counts = tripal_cv_xray_lookup_entities_for_terms($children, $target_bundle_id, $anchor_entity_id);
 
-
-  $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($children, $target_bundle_id, $mapped_entities);
-  //format results
-
+  // Format results
   $response = [
     'vocabulary' => $vocabulary,
     'accession' => $accession,
-    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps, $target_bundle_id),
+    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $counts, $target_bundle_id),
   ];
 
   drupal_json_output($response);
