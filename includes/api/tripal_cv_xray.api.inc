@@ -12,50 +12,102 @@ function tripal_cv_xray_cvterm_entity_job() {
  * Run the indexer.
  */
 function tripal_cv_xray_run_indexer() {
-  CVBrowserIndexer::run();
+  //  CVBrowserIndexer::run();
 }
 
 
 /**
  * looks up all the entities associated with an array of cvterms.
- * 
- * @param $terms: An array of term objects
- * @param $target_bundle An integer for the bundle id, ie chado_bio_data_x
- * @param $child_entities  An array of entities keyed by the bundle type.  These should be created by...
+ *
+ * @param array $terms : An array of term objects
+ * @param int $target_bundle An integer for the bundle id, ie chado_bio_data_x
+ * @param array $child_entities An array of entities keyed by the bundle type.
+ *   These should be created by...
  *
  * @return array
  */
 function tripal_cv_xray_lookup_entities_for_terms($terms, $target_bundle_id, $child_entities) {
-
   $child_entity_cvterms = [];
-
   $target_bundle_table = "public.chado_bio_data_" . $target_bundle_id;
 
   foreach ($terms as $term) {
     $accession = $term["accession"];
     $short_name = $term["vocabulary"]["short_name"];
 
-    $query= db_select("public.tripal_cvterm_entity_linker", "CEL");
+    $query = db_select("public.tripal_cvterm_entity_linker", "CEL");
     $query->fields("CEL", [
       "entity_id",
     ])
       ->condition("database", $short_name)
-      ->condition("accession", $accession)
-      ->condition("entity_id", array_keys($child_entities[$target_bundle_table]), "IN");
+      ->condition("accession", $accession);
+    //->condition("entity_id", array_keys($child_entities[$target_bundle_table]), "IN");
 
     $entities = $query->execute()->fetchAllAssoc('entity_id');
     $key = $short_name . ":" . $accession;
     $child_entity_cvterms[$key] = $entities;
   }
-  return ($child_entity_cvterms);
+
+  return $child_entity_cvterms;
+}
+
+/**
+ * Get the count of entities per term
+ *
+ * @param array $terms
+ * @param int $target_bundle_id
+ * @param int $entity_id Anchor entity id
+ *
+ * @return array
+ */
+function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_id, $entity_id) {
+  // Loading entity here is fine since the static cache holds all of the values
+  // anyway so there won't be any performance issues.
+  $entity = tripal_load_entity('TripalEntity', [$entity_id]);
+  $entity = reset($entity);
+
+  $query = db_select('public.chado_bundle', 'tb')
+    ->fields('tb', ['bundle_id', 'data_table'])
+    ->condition('bundle_id', $target_bundle_id, '=');
+  $target_info = $query->execute()->fetchObject();
+
+  $target_chado_table = $target_info->data_table;
+  $target_bundle_table = "public.chado_bio_data_" . $target_bundle_id;
+
+  $record_field = 'organism_id';
+  if ($target_chado_table === 'biomaterial') {
+    $record_field = 'taxon_id';
+  }
+
+  $mapped = [];
+  foreach ($terms as $term) {
+    $accession = $term["accession"];
+    $database = $term["vocabulary"]["short_name"];
+
+    $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {{$target_bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$target_chado_table}} CF ON CF.feature_id = CB.record_id
+              WHERE CF.{$record_field} = :record_id 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession", [
+      ':record_id' => $entity->chado_record_id,
+      ':database' => $database,
+      ':accession' => $accession,
+    ])->fetchField();
+    $key = $database . ":" . $accession;
+    $mapped[$key] = $count;
+  }
+
+  return $mapped;
 }
 
 
 /**
  * Builds the item displayed on the tip of the tree for a given term.
- * @param $anchor_entity_id
- * @param $children
- * @param $onscreen_entity_maps
+ *
+ * @param int $anchor_entity_id
+ * @param array $children
+ * @param array $map Counts of entities per term
  *
  * @return string
  */
@@ -64,7 +116,6 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
 
   $items = '<ul id="tripal-cv-lookup-tree">';
   foreach ($children as $child) {
-
     $child_name = $child['vocabulary']['short_name'] . ":" . $child['accession'];
 
     $grand = tripal_get_term_children($child['vocabulary']['short_name'], $child['accession']);
@@ -74,13 +125,14 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
       'children = "' . $num_grand . '" ' .
       'state = "closed" ' .
       'class = "cv-lookup-tree-node">';
+
     $class = 'tree-node-closed';
     if ($num_grand == 0) {
       $class = 'tree-node-single';
     }
-    $items .= '<i class = "tree-node-icon ' . $class . '"></i>';
-    $items .= l($child['name'], 'cv/lookup/' . $child['vocabulary']['short_name'] . '/' . $child['accession'], array('attributes' => array('target' => '_blank')));
 
+    $items .= '<i class = "tree-node-icon ' . $class . '"></i>';
+    $items .= l($child['name'], 'cv/lookup/' . $child['vocabulary']['short_name'] . '/' . $child['accession'], ['attributes' => ['target' => '_blank']]);
 
     if ($child['accession'] != $child['name']) {
       $items .= ' [' . $child_name . '] ';
@@ -90,7 +142,7 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
     if (isset($map[$child_name])) {
       $child_mapping = $map[$child_name];
     }
-    $num_mapped = count($child_mapping);
+    $num_mapped = is_array($child_mapping) ? count($child_mapping) : $child_mapping;
 
     if ($num_mapped == 0) {
       $items .= "";
@@ -100,17 +152,15 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
       if ($num_mapped == 1) {
         $record_word = "record.";
       }
-     // $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' . $anchor_entity_id . '/' . $flattened_entities);
-       $items .= l("  {$num_mapped} " . $record_word, 'cv_entities/' .
-         $child['vocabulary']['short_name']  . '/' .
-         $child['accession'] . '/' .
-         $anchor_entity_id . '/'
-         . $target_bundle_id
-       // 'page arguments' => array(1, 2, 3, 4), //db shortname, accession, anchor entity ID, mapping bundle ID
-
-       );
-
-
+      // page arguments are db shortname, accession, anchor entity ID, mapping bundle ID
+      $query_arguments = [
+        'cv_entities',
+        $child['vocabulary']['short_name'],
+        $child['accession'],
+        $anchor_entity_id,
+        $target_bundle_id,
+      ];
+      $items .= l("  {$num_mapped} " . $record_word, implode('/', $query_arguments));
     }
     $items .= '</li>';
   }
@@ -124,7 +174,8 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
 
 
 /**
- * Given an entity (the anchor entity), retrieve all entities that map to it of type target bundle.
+ * Given an entity (the anchor entity), retrieve all entities that map to it of
+ * type target bundle.
  *
  * @param $anchor_entity
  * @param $target_bundle_id
@@ -132,14 +183,13 @@ function tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $ch
  * @return array|null
  */
 function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle_id) {
-
   $entity = $anchor_entity;
 
   $child_entities = [];
   $record_id = $entity->chado_record_id;
 
   $query = db_select('public.chado_bundle', 'tb')
-    ->fields('tb', ['bundle_id',  'data_table'])
+    ->fields('tb', ['bundle_id', 'data_table'])
     ->condition('bundle_id', $target_bundle_id, '=');
   $target_info = $query->execute()->fetchObject();
 
@@ -147,13 +197,11 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
   $target_chado_table = $target_info->data_table;
   $target_bundle_table = "public.chado_bio_data_" . $bundle_id;
 
-  $results = NULL;//end query, set to null
-
-
+  // End query, set to null
+  $results = NULL;
   $target_record_column = $target_chado_table . "_id";
 
   if ($entity->chado_table == 'organism') {
-
     $query = db_select($target_bundle_table, 'tbt');
     $query->fields('tbt', ['entity_id']);
     $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
@@ -169,6 +217,7 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
     $results = $query->execute()
       ->fetchAllAssoc('entity_id');//this ensures the key is the entity ID!
   }
+
   if ($entity->chado_table == 'analysis') {
     return NULL;
     //we dont know what we're doing!
@@ -178,12 +227,13 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
     $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
     $query->fields('te', ['title']);
   }
+
   if ($results) {
     $child_entities[$target_bundle_table] = $results;
   }
+
   return $child_entities;
 }
-
 
 
 /**
@@ -195,25 +245,19 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
  * @param $anchor_entity_id
  */
 function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id) {
-  $term = tripal_get_term_details($vocabulary, $accession);
+  //$term = tripal_get_term_details($vocabulary, $accession);
   $children = tripal_get_term_children($vocabulary, $accession);
-  //Get entity mapping
-  $entity = tripal_load_entity('TripalEntity', [$anchor_entity_id]);
-  //get entity from anchor id
 
-  $entity = array_shift($entity);
+  // $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
 
-  $mapped_entities = tripal_cv_xray_fetch_associated_entities($entity, $target_bundle_id);
+  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id);
 
-
-  $onscreen_entity_maps = tripal_cv_xray_lookup_entities_for_terms($children, $target_bundle_id, $mapped_entities);
-  //format results
-
-  $response = array(
+  // Format results
+  $response = [
     'vocabulary' => $vocabulary,
     'accession' => $accession,
-    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $onscreen_entity_maps, $target_bundle_id),
-  );
+    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $counts, $target_bundle_id),
+  ];
 
   drupal_json_output($response);
 }

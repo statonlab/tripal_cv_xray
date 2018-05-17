@@ -9,19 +9,15 @@
  * @param $anchor_id
  * @param $mapping_bundle_id
  *
- * @return string
+ * @return string|NULL
+ * @throws \Exception
  */
 function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapping_bundle_id) {
-  // 'page arguments' => array(1, 2, 3, 4), //db shortname, accession, anchor entity ID, mapping bundle ID
-
   $per_page = 20;
-
-  $anchor = TripalEntity_load($anchor_id);
-
+  $anchor = tripal_load_entity('TripalEntity', [$anchor_id]);
+  $anchor = reset($anchor);
   $mapping_entity = tripal_load_bundle_entity(['id' => $mapping_bundle_id]);
-
   $map_label = $mapping_entity->label;
-
 
   $query = db_select("chado.cvterm", 'CVT');
   $query->innerjoin('chado.dbxref', 'DBX', 'DBX.dbxref_id = CVT.dbxref_id');
@@ -35,44 +31,73 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   if (!$term_id) {
     tripal_set_message("Could not look up term {$db_shortname}:{$accession}", TRIPAL_ERROR);
 
-    return;
+    return NULL;
   }
 
-
   $term = tripal_get_term_details($db_shortname, $accession);
+  $accession = $term["accession"];
+  $short_name = $term["vocabulary"]["short_name"];
 
-  //load mapped entities
+  // Load paginated mapped entities
+  if ($mapping_entity->data_table === 'biomaterial') {
+    $record_field = 'taxon_id';
+  }
+  else {
+    $record_field = 'organism_id';
+  }
 
-  $entities_all = tripal_cv_xray_fetch_associated_entities($anchor, $mapping_bundle_id);
+  $bundle_table = 'chado_bio_data_' . $mapping_bundle_id;
+  $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
+              WHERE CF.{$record_field} = :record_id 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession", [
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+  ])->fetchField();
 
+  $current_page = pager_default_initialize($count, $per_page);
 
-  //get entities for this cvterm
-  $entities = tripal_cv_xray_lookup_entities_for_terms([$term], $mapping_bundle_id, $entities_all);
-  $key = $db_shortname . ':' . $accession;
-  $entities = $entities[$key];
+  $entities = db_query("SELECT TE.id, TE.title
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {tripal_entity} TE ON TE.id = TCEL.entity_id
+              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
+              WHERE CF.{$record_field} = :record_id 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession
+              ORDER BY TCEL.entity_id ASC
+              OFFSET :offset LIMIT :limit", [
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+    ':offset' => $current_page * $per_page,
+    ':limit' => $per_page,
+  ])->fetchAll();
 
-
-  $content = 'the below ' . $map_label . ' are associated with <a href="/bio_data/' . $anchor_id . '">' . $anchor->title .'</a>';
-
-  //load paginated mapped entities
-
-  $current_page = pager_default_initialize(count($entities), $per_page);
-  $chunks = array_chunk($entities, $per_page, TRUE);
-  $pager = theme('pager', array('quantity', count($entities)));
-
-
-  $ents_to_view = array_keys($chunks[$current_page]);
-
-
-  $loaded_entities = tripal_load_entity('TripalEntity', $ents_to_view, FALSE);
+  //  $entities_to_load = [];
+  //  foreach ($entities as $one) {
+  //    $entities_to_load[] = $one->entity_id;
+  //  }
 
   $rows = [];
-  foreach ($loaded_entities as $entity) {
-
+  foreach ($entities as $entity) {
     $name = l($entity->title, "/bio_data/" . $entity->id);
     $rows[] = [$name];
   }
+
+  $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
+  $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
+
+  $content = '<p>The below ' . $map_label . ' are associated with 
+              ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing ' . $per_page . ' per page.</p>';
+
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);
+  $pager = theme('pager', ['quantity', count($entities)]);
+
   $content .= $table;
   $content .= $pager;
 
