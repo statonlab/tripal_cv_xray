@@ -210,12 +210,10 @@ class data__ontology_data extends TripalField {
    * @return array|mixed
    */
   public function instanceSettingsForm() {
-    dpm('Entered form');
     $settings = $this->instance['settings'];
     $bundle = $this->instance["bundle"];
     $bundle_info = tripal_load_bundle_entity(['name' => $bundle]);
     $anchor_base_table = $bundle_info->data_table;
-    dpm('loaded bundle');
     $element['container'] = [
       '#type' => 'fieldset',
       '#title' => $this->field["field_name"],
@@ -231,7 +229,6 @@ class data__ontology_data extends TripalField {
 
       return $element;
     }
-    dpm('Passed inspection');
 
     $element['container']['instructions'] = [
       '#type' => 'markup',
@@ -250,22 +247,16 @@ class data__ontology_data extends TripalField {
                     </div>',
     ];
 
-    dpm('Running query');
-
     $ontologies = db_select("tripal_cvterm_entity_linker", "t")
       ->fields("t", ["database"])
       ->distinct()
       ->execute()
       ->fetchAll();
 
-    dpm('End query');
-
     $ontology_options = [];
     foreach ($ontologies as $ontology) {
       $ontology_options[$ontology->database] = $ontology->database;
     }
-
-    dpm('End foreach');
 
     $element['container']['ontology'] = [
       '#type' => 'select',
@@ -275,14 +266,12 @@ class data__ontology_data extends TripalField {
       '#default_value' => isset($settings['container']) ? $settings['container']['ontology'] : NULL,
     ];
 
-    dpm('Start query 2');
     $query = db_select("chado_bundle", 'CB');
     $query->fields('CB', ['bundle_id']);
     $query->condition('CB.data_table', ['feature', 'biomaterial'], 'IN');
     $query->join('public.tripal_bundle', 'TB', 'CB.bundle_id = TB.id');
     $query->fields('TB', ['label']);
     $bundles = $query->execute()->FetchAll();
-  dpm('End query 2');
     $target_bundles = [];
 
     foreach ($bundles as $bundle) {
@@ -290,7 +279,7 @@ class data__ontology_data extends TripalField {
       $label = $bundle->label;
       $target_bundles[$bundle_id] = $label;
     }
-dpm('end foreach 2');
+
     if ($anchor_base_table == "organism" || $anchor_base_table == "analysis") {
       //  $base_tables = ["feature", "biomaterial"];
     }
@@ -302,7 +291,6 @@ dpm('end foreach 2');
       '#options' => $target_bundles,
       '#default_value' => isset($settings['container']) ? $settings['container']['target_bundle'] : NULL,
     ];
-    dpm('Exiting instance settings');
 
     return $element;
   }
