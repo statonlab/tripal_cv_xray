@@ -11,6 +11,15 @@ function tripal_cv_xray_schema() {
   return $schema;
 }
 
+function tripal_cv_xray_install() {
+  tripal_insert_cvterm([
+    'id' => 'data:2353',
+    'name' => 'Ontological data',
+    'cv_name' => 'EDAM',
+    'definition' => 'An identifier of a biological or bioinformatics database.',
+  ]);
+}
+
 /**
  * Get linker table schema.
  *
@@ -160,4 +169,15 @@ function tripal_cv_xray_update_7100() {
 
     db_create_table('tripal_cvterm_entity_linker', $schema);
   }
+}
+
+function tripal_cv_xray_update_7101() {
+  //https://www.ebi.ac.uk/ols/ontologies/edam/terms?iri=http%3A%2F%2Fedamontology.org%2Fdata_2353
+  tripal_insert_cvterm([
+    'id' => 'data:2353',
+    'name' => 'Ontological data',
+    'cv_name' => 'EDAM',
+    'definition' => 'An identifier of a biological or bioinformatics database.',
+  ]);
+
 }

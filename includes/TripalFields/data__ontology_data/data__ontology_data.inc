@@ -81,7 +81,7 @@ class data__ontology_data extends TripalField {
     // The name of the term.
     'term_name' => 'Ontology data',
     // The unique ID (i.e. accession) of the term.
-    'term_accession' => '4231',
+    'term_accession' => '2353',
     // Set to TRUE if the site admin is not allowed to change the term
     // type, otherwise the admin can change the term mapped to a field.
     'term_fixed' => FALSE,
