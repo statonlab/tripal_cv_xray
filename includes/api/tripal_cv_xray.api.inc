@@ -73,9 +73,11 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
   $target_chado_table = $target_info->data_table;
   $target_bundle_table = "public.chado_bio_data_" . $target_bundle_id;
 
+  $target_chado_column = 'feature_id';
   $record_field = 'organism_id';
   if ($target_chado_table === 'biomaterial') {
     $record_field = 'taxon_id';
+    $target_chado_column = 'biomaterial_id';
   }
 
   $mapped = [];
@@ -86,7 +88,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
     $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {{$target_bundle_table}} CB ON CB.entity_id = TCEL.entity_id
-              INNER JOIN {chado.{$target_chado_table}} CF ON CF.feature_id = CB.record_id
+              INNER JOIN {chado.{$target_chado_table}} CF ON CF.{$target_chado_column} = CB.record_id
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession", [
