@@ -21,6 +21,17 @@ function tripal_cv_xray_menu() {
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
+  $items['tripal_cv_xray/collections/%/%/%/%'] = [
+    'title' => t('Create Collection'),
+    'description' => t('Create a downloadable collection.'),
+    'access arguments' => ['access content'],
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['tripal_cv_xray_collections_form', 2, 3, 4, 5],
+    //db shortname, accession, anchor entity ID, mapping bundle ID
+    'file' => 'includes/tripal_cv_xray_collections.form.inc',
+    'file path' => drupal_get_path('module', 'tripal_cv_xray'),
+  ];
+
   $items['cv_entities/%/%/%/%'] = [
     'type' => MENU_NORMAL_ITEM,
     'title' => t('Matching Entities'),

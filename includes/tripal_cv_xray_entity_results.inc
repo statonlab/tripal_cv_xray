@@ -91,8 +91,22 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
   $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
+  $collection_link = l('Create Downloadable Collection', 'tripal_cv_xray/collections/' . $db_shortname . '/' .
+    $accession . '/' . $anchor_id . '/' . $mapping_bundle_id, [
+      'attributes' => [
+        'id' => 'create-collection-btn',
+        'class' => 'btn btn-primary',
+      ],
+    ]);
 
-  $content = '<p>The below ' . $map_label . ' are associated with 
+  $content = '';
+
+  // Make sure Tripal collections are supported
+  if (function_exists('tripal_create_collection')) {
+    $content = '<p>' . $collection_link . '</p>';
+  }
+
+  $content .= '<p>The below ' . $map_label . ' are associated with 
               ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing ' . $per_page . ' per page.</p>';
 
   $table = theme('table', ['header' => [$map_label], 'rows' => $rows]);

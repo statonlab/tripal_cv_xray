@@ -438,6 +438,7 @@ class XRayIndexerJob implements XRayJob {
    * @return \DatabaseStatementInterface|int
    */
   public function insertData(&$data) {
+
     $query = db_insert('tripal_cvterm_entity_linker')->fields([
       'entity_id',
       'cvterm_id',
@@ -468,6 +469,8 @@ class XRayIndexerJob implements XRayJob {
         $query->values($this->extractCvtermForInsertion($property, $entity_id));
       }
     }
+
+    var_dump($data);
 
     return $query->execute();
   }
