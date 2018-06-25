@@ -454,25 +454,57 @@ class XRayIndexerJob implements XRayJob {
       $related_cvterms = &$record['related_cvterms'];
 
       foreach ($cvterms as $cvterm) {
-        $query->values($this->extractCvtermForInsertion($cvterm, $entity_id));
+        $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
+        if($this->exists($row)) {
+          continue;
+        }
+        $query->values($row);
       }
 
       foreach ($related_cvterms as $cvterm) {
-        $query->values($this->extractCvtermForInsertion($cvterm, $entity_id));
+        $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
+        if($this->exists($row)) {
+          continue;
+        }
+        $query->values($row);
       }
 
       foreach ($properties as $property) {
-        $query->values($this->extractCvtermForInsertion($property, $entity_id));
+        $row = $this->extractCvtermForInsertion($property, $entity_id);
+        if($this->exists($row)) {
+          continue;
+        }
+        $query->values($row);
       }
 
       foreach ($related_props as $property) {
-        $query->values($this->extractCvtermForInsertion($property, $entity_id));
+        $row = $this->extractCvtermForInsertion($property, $entity_id);
+        if($this->exists($row)) {
+          continue;
+        }
+        $query->values($row);
       }
     }
 
-    var_dump($data);
-
     return $query->execute();
+  }
+
+
+  /**
+   * Checks of a row already exists.
+   *
+   * @param $row
+   *
+   * @return bool
+   */
+  public function exists($row) {
+    $query = db_select('tripal_cvterm_entity_linker', 'TCEL');
+
+    foreach ($row as $field => $value) {
+      $query->condition($field, $value);
+    }
+
+    return !empty($query->execute()->fetchObject());
   }
 
   /**
