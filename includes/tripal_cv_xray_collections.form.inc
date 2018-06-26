@@ -44,7 +44,7 @@ function tripal_cv_xray_collections_form($form, &$form_state, $db_shortname, $ac
     '#title' => t('Name'),
     '#description' => t('The name for this collection.'),
     '#type' => 'textfield',
-    '#required' => true,
+    '#required' => TRUE,
   ];
 
   $form['description'] = [
@@ -57,6 +57,8 @@ function tripal_cv_xray_collections_form($form, &$form_state, $db_shortname, $ac
     '#type' => 'submit',
     '#value' => 'Create Collection',
   ];
+
+
 
   return $form;
 }
@@ -76,12 +78,12 @@ function tripal_cv_xray_collections_form_validate($form, &$form_state) {
   global $user;
 
   $collections = db_select('tripal_collection', 'tc')
-    ->fields('tc', array('collection_id'))
+    ->fields('tc', ['collection_id'])
     ->condition('uid', $user->uid)
     ->orderBy('tc.collection_name')
     ->execute();
 
-  foreach($collections as $collection) {
+  foreach ($collections as $collection) {
     if ($collection_name == $collection) {
       $error_msg = t('Collection name must be unique.');
       form_set_error($error_msg);

@@ -20,6 +20,32 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#markup' => $welcome,
   ];
 
+  //create table of previously indexed bundles
+
+  $headers = ['DB Short Name', 'Number of Total Entities', 'Entities By Bundle'];
+  $rows = [];
+  $dbs = tripal_cv_xray_retrieve_indexed_dbs();
+
+  if (count($dbs) > 0) {
+    foreach ($dbs as $db) {
+
+
+      $name = $db['name'];
+      $sub_count = tripal_cv_xray_count_indexed_entities($name);
+
+      $count = $db['count'];
+
+      $cbyb = theme('table', ['header' => ['Bundle', 'Count'], 'rows' => $sub_count]);
+      $rows[] = [$name, $count, $cbyb];
+    }
+
+    $form['entity_table'] = [
+      '#type' => 'markup',
+      '#markup' => theme('table', ['header' => $headers, 'rows' => $rows]),
+    ];
+  }
+
+
   //get all site vocabs
 
   $vocabs = tripal_get_vocabularies();
@@ -39,6 +65,7 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     ];
   }
 
+
   $header = ['Name', 'Short Name', 'Description'];
 
   $form['cv_select'] = [
@@ -47,6 +74,8 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#options' => $rows,
     '#prefix' => '<p>Select a CV to index.  Only index CVs which you will create browsers for.</p>',
   ];
+
+
   $supported_tables = ['biomaterial', 'feature'];
 
   $query = db_select("public.chado_bundle", 'CB')
@@ -123,4 +152,78 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
   XRayQueue::dispatch($job);
   drupal_set_message('Dispatcher job launched successfully.');
   drupal_set_message('You may run the jobs using `drush cron`');
+}
+
+
+function tripal_cv_xray_retrieve_indexed_dbs() {
+
+  $list = [];
+  $query = db_select('public.tripal_cvterm_entity_linker', 't');
+  $query->fields('t', ['database']);
+  $query->distinct();
+  $results = $query->execute()->fetchAll();
+
+  foreach ($results as $item) {
+    $database = $item->database;
+
+    $query = db_select('public.tripal_cvterm_entity_linker', 't');
+    $query->fields('t', ['entity_id']);
+    $query->distinct();
+    $query->condition('database', $database);
+    $count = $query->countQuery()->execute()->fetchField();
+
+    $list[$database] = [
+      'name' => $database,
+      'count' => $count,
+    ];
+  }
+  return $list;
+
+}
+
+function tripal_cv_xray_count_indexed_entities($short_name) {
+
+  $count = NULL;
+  $list = [];
+  $query = db_select('public.tripal_cvterm_entity_linker', 't');
+  $query->join('public.tripal_entity', 'e', 't.entity_id = e.id');
+  $query->join('public.tripal_bundle', 'tb', 'e.term_id = tb.term_id');
+  $query->fields('tb', ['label']);
+  $query->condition('database', $short_name);
+  $query->distinct();
+  $bundles = $query->execute()->fetchAll();
+
+  foreach ($bundles as $bundle) {
+    $label = $bundle->label;
+    $query = db_select('public.tripal_cvterm_entity_linker', 't');
+    $query->join('public.tripal_entity', 'e', 't.entity_id = e.id');
+    $query->join('public.tripal_bundle', 'tb', 'e.term_id = tb.term_id');
+    $query->fields('tb', ['label']);
+    $query->condition('database', $short_name);
+    $query->condition('label', $label);
+    $count = $query->countQuery()->execute()->fetchField();
+
+    $list[$label] = [
+      'name' => $label,
+      'count' => $count,
+    ];
+  }
+
+  $query = 'select tb.label AS name, count(*) AS count FROM {tripal_cvterm_entity_linker} t 
+INNER JOIN {tripal_entity} e ON t.entity_id = e.id 
+INNER JOIN {tripal_bundle} tb ON tb.term_id = e.term_id
+WHERE database = :db
+GROUP BY tb.label';
+  $results = db_query($query, [':db' => $short_name])->fetchAll();
+
+  $list = [];
+
+  foreach ($results as $result){
+    $count = $result->count;
+    $name = $result->name;
+    $list[] = ['count' => $count, 'name' => $name];
+    
+  }
+
+  return $list;
 }
