@@ -504,7 +504,7 @@ class XRayIndexerJob implements XRayJob {
       $query->condition($field, $value);
     }
 
-    return !empty($query->execute()->fetchObject());
+    return (int) $query->countQuery()->execute()->fetchField() > 0;
   }
 
   /**
