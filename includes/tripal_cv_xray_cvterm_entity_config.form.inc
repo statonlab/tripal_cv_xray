@@ -193,8 +193,6 @@ function tripal_cv_xray_count_indexed_entities($short_name) {
   $query->distinct();
   $bundles = $query->execute()->fetchAll();
 
-  //TODO: this is awful.  I knwo I can do this in one query.  How?
-
   foreach ($bundles as $bundle) {
     $label = $bundle->label;
     $query = db_select('public.tripal_cvterm_entity_linker', 't');
@@ -211,6 +209,21 @@ function tripal_cv_xray_count_indexed_entities($short_name) {
     ];
   }
 
-  return $list;
+  $query = 'select tb.label AS name, count(*) AS count FROM {tripal_cvterm_entity_linker} t 
+INNER JOIN {tripal_entity} e ON t.entity_id = e.id 
+INNER JOIN {tripal_bundle} tb ON tb.term_id = e.term_id
+WHERE database = :db
+GROUP BY tb.label';
+  $results = db_query($query, [':db' => $short_name])->fetchAll();
 
+  $list = [];
+
+  foreach ($results as $result){
+    $count = $result->count;
+    $name = $result->name;
+    $list[] = ['count' => $count, 'name' => $name];
+    
+  }
+
+  return $list;
 }
