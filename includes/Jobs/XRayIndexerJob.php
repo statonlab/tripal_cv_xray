@@ -455,7 +455,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($cvterms as $cvterm) {
         $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -463,7 +463,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($related_cvterms as $cvterm) {
         $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -471,7 +471,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($properties as $property) {
         $row = $this->extractCvtermForInsertion($property, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -479,7 +479,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($related_props as $property) {
         $row = $this->extractCvtermForInsertion($property, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);

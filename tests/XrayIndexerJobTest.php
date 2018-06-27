@@ -8,7 +8,7 @@ use StatonLab\TripalTestSuite\TripalTestCase;
 class XrayIndexerJobTest extends TripalTestCase {
 
   // Uncomment to auto start and rollback db transactions per test method.
-  // use DBTransaction;
+  use DBTransaction;
 
   /**
    * @ticket 39
@@ -45,6 +45,11 @@ class XrayIndexerJobTest extends TripalTestCase {
 
     $entity_id = chado_get_record_entity_by_table('feature', $mrna->feature_id);
 
+    if (!$entity_id){
+      print("Entity could not be published!");
+      return;
+    }
+
     $bundle_id = db_select('chado_bundle', 'cb')
       ->fields('cb', ['bundle_id'])
       ->condition('type_id', $mrna_term->cvterm_id)
@@ -58,15 +63,24 @@ class XrayIndexerJobTest extends TripalTestCase {
 
     $job = new \XRayIndexerJob($bundle, ['GO'], TRUE);
     $job->offset(0);
-    $job->limit(100);
+    $job->limit(500000);
     $job->handle();
 
-    $query = db_select('tripal_cvterm_entity_linker', 't')
-      ->fields('t', ['cvterm_id']);
-    $results =   $query->execute()
-  ->fetchAll();
-//      ->condition('entity_id', $entity_id);
-    var_dump($results);
+//    $query = db_select('tripal_cvterm_entity_linker', 't')
+//      ->fields('t', ['cvterm_id'])
+//    ->condition('entity_id', $entity_id);
 
+    $query = 'select t.cvterm_id AS id, count(*) AS count FROM {tripal_cvterm_entity_linker} t 
+WHERE t.entity_id = :entity_id
+GROUP BY t.cvterm_id';
+
+   $results =  db_query($query, [':entity_id' => $entity_id]);
+
+    /**
+     * For any given entity, a given cvterm should not be in the linker more than once.
+     */
+    foreach ($results as $result){
+      $this->assertLessThan( 2, $result->count);
+    }
   }
 }
