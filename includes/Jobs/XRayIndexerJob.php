@@ -52,18 +52,35 @@ class XRayIndexerJob implements XRayJob {
   protected $tables;
 
   /**
+   * Will be set only if we are indexing a single entity.
+   *
+   * @var int
+   */
+  protected $entity_id;
+
+  /**
    * Create a new indexing job.
    *
-   * @param object $bundle
-   * @param array $cv_shortnames
-   * @param bool $verbose
+   * @param array $options Available options
+   *    'bundle' => object - required
+   *    'entity_id' => int - optional: set if you want to index a single entity
+   *    'cv_shortnames' => array - optional
+   *
+   * @throws \Exception
    */
-  public function __construct($bundle, $cv_shortnames, $verbose = FALSE) {
-    $this->bundle = $bundle;
-    $this->cv_shortnames = $cv_shortnames;
+  public function __construct(array $options) {
+    if (isset($options['entity_id'])) {
+      $this->entity_id = $options['entity_id'];
+    }
 
-    if (!$cv_shortnames) {
+    if (!isset($options['bundle'])) {
+      throw new Exception('"bundle" is a required option in XRayIndexerJob!');
+    }
 
+    $this->bundle = $options['bundle'];
+
+    if (isset($options['cv_shortnames'])) {
+      $this->cv_shortnames = $options['cv_shortnames'];
     }
   }
 
@@ -94,7 +111,7 @@ class XRayIndexerJob implements XRayJob {
    * @throws \Exception
    */
   public function handle() {
-    $entities = $this->getEntitiesChunk();
+    $entities = $this->getEntitiesChunk($this->entity_id);
     $data = $this->loadData($entities);
     $this->insertData($data);
 
@@ -125,13 +142,18 @@ class XRayIndexerJob implements XRayJob {
    *
    * @return array Chunk of entities. Returns empty array
    */
-  public function getEntitiesChunk() {
+  public function getEntities($entity_id = NULL) {
     $bundle_table = "chado_bio_data_{$this->bundle->bundle_id}";
 
     $query = db_select($bundle_table, 'CB');
     $query->fields('CB', ['entity_id', 'record_id']);
-    $query->orderBy('entity_id', 'asc');
-    $query->range($this->offset, $this->chunk);
+    if ($entity_id) {
+      $query->condition('entity_id', $entity_id);
+    }
+    else {
+      $query->orderBy('entity_id', 'asc');
+      $query->range($this->offset, $this->chunk);
+    }
     $data = $query->execute()->fetchAll();
 
     return $data;
@@ -455,7 +477,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($cvterms as $cvterm) {
         $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -463,7 +485,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($related_cvterms as $cvterm) {
         $row = $this->extractCvtermForInsertion($cvterm, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -471,7 +493,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($properties as $property) {
         $row = $this->extractCvtermForInsertion($property, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
@@ -479,7 +501,7 @@ class XRayIndexerJob implements XRayJob {
 
       foreach ($related_props as $property) {
         $row = $this->extractCvtermForInsertion($property, $entity_id);
-        if($this->exists($row)) {
+        if ($this->exists($row)) {
           continue;
         }
         $query->values($row);
