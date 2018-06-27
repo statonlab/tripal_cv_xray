@@ -5,7 +5,6 @@
 function tripal_cv_xray_schema() {
   $schema = [];
 
-  //$schema['tripal_cvterm_entity_index'] = tripal_cvterm_entity_index_schema();
   $schema['tripal_cvterm_entity_linker'] = tripal_cv_xray_cvterm_entity_linker();
   $schema['tripal_cv_xray_config'] = tripal_cv_xray_entity_config_schema();
 
@@ -129,70 +128,6 @@ function tripal_cv_xray_cvterm_entity_linker() {
 
 }
 
-//
-///**
-// * Tripal cvterm entity index schema
-// *
-// * This schema is for storing cvterm usage for entities.  The CVterm browser
-// * uses this schema to provide filterable lists of entities that associate with
-// * a given CVterm and its child terms.
-// *
-// * @return array
-// */
-//function tripal_cvterm_entity_index_schema() {
-//  $schema = [
-//    'description' => 'This table is used for tracking cvterm annotations.',
-//    'fields' => [
-//      'cvterm_entity_id' => [
-//        'type' => 'serial',
-//        'not null' => TRUE,
-//      ],
-//      'cvterm_id' => [
-//        'description' => 'chado cvterm id',
-//        'type' => 'int',
-//        'not null' => TRUE,
-//      ],
-//      'database' => [
-//        'description' => 'Database shortname for term.',
-//        'type' => 'varchar',
-//        'not null' => TRUE,
-//      ],
-//      'accession' => [
-//        'description' => 'Term accession.',
-//        'type' => 'varchar',
-//        'not null' => TRUE,
-//      ],
-//      'bundle_id' => [
-//        'description' => 'Bundle table.',
-//        'type' => 'int',
-//        'not null' => TRUE,
-//      ],
-//      'entities_array' => [
-//        'description' => 'Entities associated with this term and all child terms',
-//        'type' => 'text',
-//        'not null' => TRUE,
-//      ],
-//    ],
-//    'primary key' => [
-//      'cvterm_entity_id',
-//    ],
-//    'indexes' => [
-//      'accession' => ['accession'],
-//      'db' => ['database'],
-//    ],
-//    'foreign keys' => [
-//      'cvterm' => [
-//        'table' => 'cvterm',
-//        'columns' => [
-//          'uid' => 'cvterm_id',
-//        ],
-//      ],
-//    ],
-//  ];
-//
-//  return $schema;
-//}
-
 /**
  * Uninstall
  */
@@ -217,6 +152,9 @@ function tripal_cv_xray_update_7100() {
   }
 }
 
+/**
+ * Add the ontological data term.
+ */
 function tripal_cv_xray_update_7101() {
   //https://www.ebi.ac.uk/ols/ontologies/edam/terms?iri=http%3A%2F%2Fedamontology.org%2Fdata_2353
   tripal_insert_cvterm([
@@ -228,10 +166,13 @@ function tripal_cv_xray_update_7101() {
 
 }
 
-function tripal_cv_xray_update_7102(){
-  $schema = [];
-  $schema['tripal_cv_xray_config'] = tripal_cv_xray_entity_config_schema();
+/**
+ * Creates the configuration table used for hooks
+ */
+function tripal_cv_xray_update_7102() {
 
-  //how do we add this?
-
+  if (!db_table_exists('tripal_cv_xray_config')) {
+    $schema = tripal_cv_xray_entity_config_schema();
+    db_create_table('tripal_cv_xray_config', $schema);
+  }
 }
