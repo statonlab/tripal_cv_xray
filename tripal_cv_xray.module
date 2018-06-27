@@ -1,5 +1,4 @@
 <?php
-require_once "includes/ChadoEntityChildCvterm.inc";
 require_once "includes/api/tripal_cv_xray.api.inc";
 require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 require_once "includes/tripal_cv_xray_cvterm_entity_config.form.inc";
