@@ -50,9 +50,48 @@ class AdminXrayFormTest extends TripalTestCase {
 
     $db = $populated_db['db'];
 
-    $bundles  = \tripal_cv_xray_count_indexed_entities($db->name);
+    $bundles = \tripal_cv_xray_count_indexed_entities($db->name);
     $this->assertNotNull($bundles);
     $this->assertNotEmpty($bundles);
+
+  }
+
+  public function testIndexingUpdatesTable() {
+
+    //set database to have known state
+    $populated_db = $this->populate_index();
+    //retrieve chado.databases that are indexed
+    $db = $populated_db['db'];
+
+    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
+
+    $mrna_bundle_id = db_select('chado_bundle', 't')
+      ->fields('t', ['bundle_id'])
+      ->condition('type_id', $mrna_term->cvterm_id)
+      ->condition('data_table', 'feature')
+      ->execute()
+      ->fetchField();
+
+    $query = db_select('tripal_cv_xray_config', 't')
+      ->fields('t', ['db_id', 'bundle_id'])
+      ->condition('db_id', $db->db_id);
+    $results = $query->execute()->fetchAll();
+
+    $this->assertNotEmpty($results);
+
+    $dbs = [];
+    $bundle_ids = [];
+    $has_combo = FALSE;
+    foreach ($results as $result) {
+      $db = $result->db_id;
+      $b_id = $result->bundle_id;
+      if ($db == $db->db_id && $b_id == $mrna_bundle_id) {
+        $has_combo = TRUE;
+      }
+    }
+
+    $this->assertTrue($has_combo, 'mrna bundle not inserted into config table with test DB.');
+
 
   }
 
@@ -86,5 +125,6 @@ class AdminXrayFormTest extends TripalTestCase {
     return ['db' => $db, 'feature' => $feature, 'entity_id' => $entity];
 
   }
+
 
 }

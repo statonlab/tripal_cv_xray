@@ -167,12 +167,17 @@ function tripal_cv_xray_update_7101() {
 }
 
 /**
- * Creates the configuration table used for hooks
+ * Creates the configuration table used for hooks.  Remove the unused index
+ * table (we use the linker table instead.)
  */
 function tripal_cv_xray_update_7102() {
 
   if (!db_table_exists('tripal_cv_xray_config')) {
     $schema = tripal_cv_xray_entity_config_schema();
     db_create_table('tripal_cv_xray_config', $schema);
+  }
+
+  if (db_table_exists('tripal_cvterm_entity_index')) {
+    db_drop_table("tripal_cvterm_entity_index");
   }
 }
