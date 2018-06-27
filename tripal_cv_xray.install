@@ -36,22 +36,19 @@ function tripal_cv_xray_entity_config_schema() {
         'type' => 'serial',
         'not null' => TRUE,
       ],
-      'db_id' => [
-        'type' => 'int',
-        'description' => 'chado db id (cv shortname)',
+      'shortname' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'chado db name (cv shortname)',
       ],
       'bundle_id' => [
         'type' => 'int',
         'description' => 'tripal bundle ID',
+        'not null' => TRUE,
       ],
     ],
     'foreign keys' => [
-      'db_id' => [
-        'table' => 'db',
-        'columns' => [
-          'uid' => 'db_id',
-        ],
-      ],
       'bundle_id' => [
         'table' => 'tripal_bundle',
         'columns' => [

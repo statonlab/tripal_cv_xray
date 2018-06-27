@@ -74,3 +74,64 @@ function tripal_cv_xray_cron_queue_info() {
 
   return $queues;
 }
+
+/**
+ * Implements hook_entity_delete().
+ *
+ * Deleted entities should be removed from the index.
+ */
+
+function tripal_cv_xray_entity_delete($entity, $type) {
+  tripal_cv_xray_index_remove_single_entity($entity, $type);
+
+}
+
+/**
+ * Implements hook_entity_insert()
+ * When an entity is inserted, see if its in the config.  If so, launch a job
+ * that indexes it for all the configured vocabs.
+ */
+function tripal_cv_xray_entity_insert($entity, $type) {
+  tripal_cv_xray_index_single_entity($entity, $type);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function tripal_cv_xray_entity_update($entity, $type) {
+  //TODO: Do we need to do anything to deal with entities that are already indexed?  Should we remove them from the index first?
+  tripal_cv_xray_index_single_entity($entity, $type);
+}
+
+function tripal_cv_xray_index_single_entity($entity, $type) {
+  if ($type != 'TripalEntity') {
+    return;
+  }
+
+  $bundle_name = $entity->bundle;
+  $bundle_id = str_replace('bio_data_', '', $bundle_name);
+
+  $config = db_select('tripal_cv_xray_config', 't')
+    ->fields('t', ['shortname'])
+    ->condition('bundle_id', $bundle_id)
+    ->execute()
+    ->fetchAll();
+
+  if (!$config) {
+    return;
+  }
+  $job = new XRayIndexerJob($bundle_name, $config);
+  $job->loadData([$entity]);
+  XRayQueue::dispatch($job);
+
+}
+
+function tripal_cv_xray_index_remove_single_entity($entity, $type) {
+
+  if ($type != 'TripalEntity') {
+    return;
+  }
+  //TODO: if the entity is in the index, remove it.
+
+}
+

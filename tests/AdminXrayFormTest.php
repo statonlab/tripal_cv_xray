@@ -56,7 +56,11 @@ class AdminXrayFormTest extends TripalTestCase {
 
   }
 
-  public function testIndexingUpdatesTable() {
+  /**
+   * Test the save db bundle config helper function.
+   *
+   */
+  public function testBundleSaverDirectly() {
 
     //set database to have known state
     $populated_db = $this->populate_index();
@@ -65,34 +69,16 @@ class AdminXrayFormTest extends TripalTestCase {
 
     $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
 
-    $mrna_bundle_id = db_select('chado_bundle', 't')
-      ->fields('t', ['bundle_id'])
-      ->condition('type_id', $mrna_term->cvterm_id)
-      ->condition('data_table', 'feature')
-      ->execute()
-      ->fetchField();
+    $mrna_bundle_id = $this->getMRNA_bundle_id();
+
+    tripal_cv_xray_save_db_bundle_config([$mrna_bundle_id], [$db->name]);
 
     $query = db_select('tripal_cv_xray_config', 't')
-      ->fields('t', ['db_id', 'bundle_id'])
-      ->condition('db_id', $db->db_id);
+      ->fields('t', ['shortname', 'bundle_id'])
+      ->condition('shortname', $db->name);
     $results = $query->execute()->fetchAll();
 
-    $this->assertNotEmpty($results);
-
-    $dbs = [];
-    $bundle_ids = [];
-    $has_combo = FALSE;
-    foreach ($results as $result) {
-      $db = $result->db_id;
-      $b_id = $result->bundle_id;
-      if ($db == $db->db_id && $b_id == $mrna_bundle_id) {
-        $has_combo = TRUE;
-      }
-    }
-
-    $this->assertTrue($has_combo, 'mrna bundle not inserted into config table with test DB.');
-
-
+    $this->assertNotEmpty($results, 'the function tripal_cv_xray_save_db_bundle_config did not add the test db and bundle to the configuration table.');
   }
 
   private function populate_index() {
@@ -126,5 +112,15 @@ class AdminXrayFormTest extends TripalTestCase {
 
   }
 
+  private function getMRNA_bundle_id() {
+    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
+    $mrna_bundle_id = db_select('chado_bundle', 't')
+      ->fields('t', ['bundle_id'])
+      ->condition('type_id', $mrna_term->cvterm_id)
+      ->condition('data_table', 'feature')
+      ->execute()
+      ->fetchField();
 
+    return $mrna_bundle_id;
+  }
 }
