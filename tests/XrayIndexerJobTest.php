@@ -75,15 +75,6 @@ class XrayIndexerJobTest extends TripalTestCase {
       ]);
     }
 
-    $this->publish('feature');
-
-    $this->entity_id = chado_get_record_entity_by_table('feature', $this->mrna->feature_id);
-
-    if (!$this->entity_id) {
-      print("Entity could not be published!");
-      return;
-    }
-
     $bundle_id = db_select('chado_bundle', 'cb')
       ->fields('cb', ['bundle_id'])
       ->condition('type_id', $this->mrna_term->cvterm_id)
@@ -92,6 +83,26 @@ class XrayIndexerJobTest extends TripalTestCase {
 
     $this->bundle = tripal_load_bundle_entity(['id' => $bundle_id]);
     $this->bundle->bundle_id = $bundle_id;
+
+    // Tell our config table that we want to index this entity type
+    // We delete first to make sure we don't create any duplicate entries
+    db_delete('tripal_cv_xray_config')
+      ->condition('shortname', 'GO')
+      ->condition('bundle_id', $this->bundle->bundle_id)
+      ->execute();
+    db_insert('tripal_cv_xray_config')
+      ->fields([
+        'shortname' => 'GO',
+        'bundle_id' => $this->bundle->bundle_id,
+      ])->execute();
+
+    $this->publish('feature');
+
+    $this->entity_id = chado_get_record_entity_by_table('feature', $this->mrna->feature_id);
+
+    if (!$this->entity_id) {
+      throw new \Exception("Entity could not be published!");
+    }
   }
 
   /**
