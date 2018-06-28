@@ -130,8 +130,6 @@ function tripal_cv_xray_cvterm_entity_form_validate($form, &$form_state) {
   $bundle_ids = array_filter($bundle_ids);
   $cvs = array_filter($cvs);
 
-  dpm($cvs);
-
   if (count($bundle_ids) == 0) {
     form_set_error("bundle_select", "please select at least one bundle to index.");
 
@@ -173,11 +171,19 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
   drupal_set_message('You may run the jobs using `drush cron`');
 }
 
+/**
+ * Create a bundle config record.
+ *
+ * @param $bundle_ids
+ * @param $db_names
+ *
+ * @throws \Exception
+ */
 function tripal_cv_xray_save_db_bundle_config($bundle_ids, $db_names) {
   foreach ($db_names as $db_name) {
     foreach ($bundle_ids as $bundle_id) {
-      $result = db_select('tripal_cv_xray_config')
-        ->fields(['tripal_cv_xray_config_id'])
+      $result = db_select('tripal_cv_xray_config', 'TCXC')
+        ->fields('TCXC', ['cv_xray_config_id'])
         ->condition('shortname', $db_name)
         ->condition('bundle_id', $bundle_id)
         ->execute()
