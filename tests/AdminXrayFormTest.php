@@ -95,7 +95,7 @@ class AdminXrayFormTest extends TripalTestCase {
     $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
     $feature = factory('chado.feature')->create(['type_id' => $mrna_term->cvterm_id]);
 
-    $this->publish('feature', [$feature->feature_id]);
+    $this->publish('feature');
 
 
     $entity = chado_get_record_entity_by_table('feature', $feature->feature_id);

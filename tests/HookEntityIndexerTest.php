@@ -19,7 +19,7 @@ class HookEntityIndexerTest extends TripalTestCase {
 
    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
    $feature = factory('chado.feature')->create(['type_id' => $mrna_term->cvterm_id]);
-   $this->publish('feature', [$feature->feature_id]);
+   $this->publish('feature');
 
    //Check linker index, confirm stuff was indexed.
    //TODO:  should the hook trigger a job?  If so how do we test that it worked?
