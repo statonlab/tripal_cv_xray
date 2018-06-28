@@ -2,7 +2,14 @@
 
 namespace Tests\DatabaseSeeders;
 
+//require_once __DIR__.'/../bootstrap.php';
+
+
 use StatonLab\TripalTestSuite\Database\Seeder;
+
+//module_load_include('inc', 'tripal_chado', 'includes/TripalImporter/OBOImporter.inc');
+module_load_include('inc', 'tripal_chado', 'includes/TripalImporter/OBOImporter');
+
 
 class GoOboSeeder extends Seeder
 {
