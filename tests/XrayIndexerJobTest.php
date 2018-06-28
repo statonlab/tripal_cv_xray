@@ -4,6 +4,7 @@ namespace Tests;
 
 use StatonLab\TripalTestSuite\DBTransaction;
 use StatonLab\TripalTestSuite\TripalTestCase;
+use Tests\DatabaseSeeders\GoOboSeeder;
 
 class XrayIndexerJobTest extends TripalTestCase {
 
@@ -54,6 +55,8 @@ class XrayIndexerJobTest extends TripalTestCase {
    * @throws \Exception
    */
   private function publishAnnotatedFeatureEntities() {
+
+    GoOboSeeder::seed();
     // Pick three go terms that are all nearby
     $termA = chado_get_cvterm(['id' => 'GO:0003723']);
     $termB = chado_get_cvterm(['id' => 'GO:0008135']);
