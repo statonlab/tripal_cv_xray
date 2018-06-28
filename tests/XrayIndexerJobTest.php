@@ -106,17 +106,13 @@ class XrayIndexerJobTest extends TripalTestCase {
   }
 
   /**
-   * The setUp method publishes annotated entities that trigger the entity
-   * insert hook. This test makes sure the hook got triggered and that
-   * the items appear in the index after the job gets executed.
+   * Run all jobs in our tripal_cv_xray queue.
    *
    * @throws \Exception
    */
-  public function testInsertHookIsTriggered() {
-    // Verify that our job got inserted into the queue
+  private function runQueuedJobs() {
     /** @var \SystemQueue $queue */
     $queue = \DrupalQueue::get('tripal_cv_xray');
-    $this->assertGreaterThan(0, $queue->numberOfItems());
 
     // Run all jobs in the queue
     while ($item = $queue->claimItem()) {
@@ -124,6 +120,17 @@ class XrayIndexerJobTest extends TripalTestCase {
       $job = $item->data;
       $job->handle();
     }
+  }
+
+  /**
+   * The setUp method publishes annotated entities that trigger the entity
+   * insert hook. This test makes sure the hook got triggered and that
+   * the items appear in the index after the job gets executed.
+   *
+   * @throws \Exception
+   */
+  public function testInsertHookIsTriggered() {
+    $this->runQueuedJobs();
 
     // Verify the entity exists in the index
     $count = db_select('tripal_cvterm_entity_linker', 'TCEL')
@@ -132,6 +139,36 @@ class XrayIndexerJobTest extends TripalTestCase {
       ->execute()
       ->fetchField();
     $this->assertGreaterThan(0, (int) $count);
+  }
+
+  /**
+   * Test that updating an entity updates the index.
+   *
+   * @throws \Exception
+   */
+  public function testUpdateHookIsTriggered() {
+    // Run the job to index the recently published entity
+    $this->runQueuedJobs();
+
+    // Delete the relationship from feature_cvterm and trigger an update
+    db_delete('chado.feature_cvterm')
+      ->condition('feature_id', $this->mrna->feature_id)
+      ->execute();
+    $ec = entity_get_controller('TripalEntity');
+    $entities = $ec->load([$this->entity_id]);
+    $entity = reset($entities);
+    module_invoke_all('entity_update', $entity, 'TripalEntity');
+
+    // Run the queued jobs
+    $this->runQueuedJobs();
+
+    // Verify the entity exists in the index
+    $count = db_select('tripal_cvterm_entity_linker', 'TCEL')
+      ->condition('entity_id', $this->entity_id)
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+    $this->assertEquals(0, (int) $count);
   }
 
   /**
