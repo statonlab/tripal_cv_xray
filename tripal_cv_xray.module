@@ -154,6 +154,12 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
   XRayQueue::dispatch($job);
 }
 
+/**
+ * Handle removable of entities from the index.
+ * 
+ * @param $entity
+ * @param $type
+ */
 function tripal_cv_xray_index_remove_single_entity($entity, $type) {
   if ($type != 'TripalEntity') {
     return;
