@@ -529,11 +529,11 @@ class XRayIndexerJob implements XRayJob {
    */
   public function exists($row) {
     $cvname = $row['db'] . ':' . $row['accession'];
-    if (isset($this->visited[$row['entity_id']]) && isset($this->visited[$row['entity_id'][$cvname]])) {
+    if (isset($this->visited[$row['entity_id']]) && isset($this->visited[$row['entity_id']][$cvname])) {
       return TRUE;
     }
 
-    $this->visited[$row['entity_id'][$cvname]] = TRUE;
+    $this->visited[$row['entity_id']][$cvname] = TRUE;
 
     $query = db_select('tripal_cvterm_entity_linker', 'TCEL');
 
