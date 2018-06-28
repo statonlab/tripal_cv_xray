@@ -59,6 +59,14 @@ class XRayIndexerJob implements XRayJob {
   protected $entity_id;
 
   /**
+   * Save a list of accounted for cvterm -> entity_id relations.
+   *
+   * @see exists()
+   * @var array
+   */
+  protected $visited = [];
+
+  /**
    * Create a new indexing job.
    *
    * @param array $options Available options
@@ -520,6 +528,13 @@ class XRayIndexerJob implements XRayJob {
    * @return bool
    */
   public function exists($row) {
+    $cvname = $row['db'] . ':' . $row['accession'];
+    if (isset($this->visited[$row['entity_id']]) && isset($this->visited[$row['entity_id'][$cvname]])) {
+      return TRUE;
+    }
+
+    $this->visited[$row['entity_id'][$cvname]] = TRUE;
+
     $query = db_select('tripal_cvterm_entity_linker', 'TCEL');
 
     foreach ($row as $field => $value) {

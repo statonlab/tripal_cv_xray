@@ -45,7 +45,7 @@ class XrayIndexerJobTest extends TripalTestCase {
 
     $entity_id = chado_get_record_entity_by_table('feature', $mrna->feature_id);
 
-    if (!$entity_id){
+    if (!$entity_id) {
       print("Entity could not be published!");
       return;
     }
@@ -61,26 +61,30 @@ class XrayIndexerJobTest extends TripalTestCase {
 
     $bundle->bundle_id = $bundle_id;
 
-    $job = new \XRayIndexerJob($bundle, ['GO'], TRUE);
+
+    $job = new \XRayIndexerJob([
+      'bundle' => $bundle,
+      'cv_shortnames' => ['GO'],
+    ]);
     $job->offset(0);
     $job->limit(500000);
     $job->handle();
 
-//    $query = db_select('tripal_cvterm_entity_linker', 't')
-//      ->fields('t', ['cvterm_id'])
-//    ->condition('entity_id', $entity_id);
+    //    $query = db_select('tripal_cvterm_entity_linker', 't')
+    //      ->fields('t', ['cvterm_id'])
+    //    ->condition('entity_id', $entity_id);
 
     $query = 'select t.cvterm_id AS id, count(*) AS count FROM {tripal_cvterm_entity_linker} t 
 WHERE t.entity_id = :entity_id
 GROUP BY t.cvterm_id';
 
-   $results =  db_query($query, [':entity_id' => $entity_id]);
+    $results = db_query($query, [':entity_id' => $entity_id]);
 
     /**
      * For any given entity, a given cvterm should not be in the linker more than once.
      */
-    foreach ($results as $result){
-      $this->assertLessThan( 2, $result->count);
+    foreach ($results as $result) {
+      $this->assertLessThan(2, $result->count);
     }
   }
 }
