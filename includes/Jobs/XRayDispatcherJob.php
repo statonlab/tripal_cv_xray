@@ -17,7 +17,9 @@ class XRayDispatcherJob implements XRayJob {
   protected $cv_shortnames;
 
   /**
-   * The bundle IDs that we will index.  Please note these are the entities that will be mapped onto the anchor.  For example, these are the genes that will be mapped onto organism.
+   * The bundle IDs that we will index.  Please note these are the entities
+   * that will be mapped onto the anchor.  For example, these are the genes
+   * that will be mapped onto organism.
    *
    * @var
    */
@@ -42,6 +44,7 @@ class XRayDispatcherJob implements XRayJob {
 
   /**
    * Creates indexer jobs per bundle as chunks of entities.
+   * @throws \Exception
    */
   public function handle() {
     $this->clearIndexTable();
@@ -50,7 +53,10 @@ class XRayDispatcherJob implements XRayJob {
     foreach ($bundles as $bundle) {
       $total = $this->bundleTotal($bundle);
       for ($i = 0; $i < $total; $i += $this->chunk) {
-        $job = new XRayIndexerJob($bundle, $this->cv_shortnames, TRUE);
+        $job = new XRayIndexerJob([
+          'bundle' => $bundle,
+          'cv_shortnames' => $this->cv_shortnames,
+        ]);
         $job->offset($i)->limit($this->chunk);
         XRayQueue::dispatch($job);
       }

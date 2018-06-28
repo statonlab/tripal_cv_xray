@@ -22,7 +22,11 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
 
   //create table of previously indexed bundles
 
-  $headers = ['DB Short Name', 'Number of Total Entities', 'Entities By Bundle'];
+  $headers = [
+    'DB Short Name',
+    'Number of Total Entities',
+    'Entities By Bundle',
+  ];
   $rows = [];
   $dbs = tripal_cv_xray_retrieve_indexed_dbs();
 
@@ -35,7 +39,10 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
 
       $count = $db['count'];
 
-      $cbyb = theme('table', ['header' => ['Bundle', 'Count'], 'rows' => $sub_count]);
+      $cbyb = theme('table', [
+        'header' => ['Bundle', 'Count'],
+        'rows' => $sub_count,
+      ]);
       $rows[] = [$name, $count, $cbyb];
     }
 
@@ -145,15 +152,54 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
 
 
   $bundle_ids = array_keys(array_filter($bundle_ids));
+  //Note: this is the SHORT NAME.  IE THE CHADO DB NAME.
   $cvs = array_keys(array_filter($cvs));
+
+
+  //First, empty the table.  We MUST do this currently, otherwise you'll never be able to remove CV/entity combos.
+  //TODO: It would be better if one could set CV/entity combos individually, IE only index GO terms for mRNAs, but sequence INTERPRO for biomaterials.
+
+  db_query('TRUNCATE {tripal_cv_xray_config}');
+
+  tripal_cv_xray_save_db_bundle_config($bundle_ids, $cvs);
 
   $job = new XRayDispatcherJob($bundle_ids, $cvs, 500);
 
   XRayQueue::dispatch($job);
+
   drupal_set_message('Dispatcher job launched successfully.');
   drupal_set_message('You may run the jobs using `drush cron`');
 }
 
+/**
+ * Create a bundle config record.
+ *
+ * @param $bundle_ids
+ * @param $db_names
+ *
+ * @throws \Exception
+ */
+function tripal_cv_xray_save_db_bundle_config($bundle_ids, $db_names) {
+  foreach ($db_names as $db_name) {
+    foreach ($bundle_ids as $bundle_id) {
+      $result = db_select('tripal_cv_xray_config', 'TCXC')
+        ->fields('TCXC', ['cv_xray_config_id'])
+        ->condition('shortname', $db_name)
+        ->condition('bundle_id', $bundle_id)
+        ->execute()
+        ->fetchField();
+
+      if (!$result) {
+        db_insert('tripal_cv_xray_config')
+          ->fields([
+            'shortname' => $db_name,
+            'bundle_id' => $bundle_id,
+          ])
+          ->execute();
+      }
+    }
+  }
+}
 
 function tripal_cv_xray_retrieve_indexed_dbs() {
 
@@ -218,11 +264,11 @@ GROUP BY tb.label';
 
   $list = [];
 
-  foreach ($results as $result){
+  foreach ($results as $result) {
     $count = $result->count;
     $name = $result->name;
     $list[] = ['count' => $count, 'name' => $name];
-    
+
   }
 
   return $list;

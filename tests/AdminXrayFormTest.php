@@ -50,10 +50,35 @@ class AdminXrayFormTest extends TripalTestCase {
 
     $db = $populated_db['db'];
 
-    $bundles  = \tripal_cv_xray_count_indexed_entities($db->name);
+    $bundles = \tripal_cv_xray_count_indexed_entities($db->name);
     $this->assertNotNull($bundles);
     $this->assertNotEmpty($bundles);
 
+  }
+
+  /**
+   * Test the save db bundle config helper function.
+   *
+   */
+  public function testBundleSaverDirectly() {
+
+    //set database to have known state
+    $populated_db = $this->populate_index();
+    //retrieve chado.databases that are indexed
+    $db = $populated_db['db'];
+
+    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
+
+    $mrna_bundle_id = $this->getMRNA_bundle_id();
+
+    tripal_cv_xray_save_db_bundle_config([$mrna_bundle_id], [$db->name]);
+
+    $query = db_select('tripal_cv_xray_config', 't')
+      ->fields('t', ['shortname', 'bundle_id'])
+      ->condition('shortname', $db->name);
+    $results = $query->execute()->fetchAll();
+
+    $this->assertNotEmpty($results, 'the function tripal_cv_xray_save_db_bundle_config did not add the test db and bundle to the configuration table.');
   }
 
   private function populate_index() {
@@ -70,7 +95,7 @@ class AdminXrayFormTest extends TripalTestCase {
     $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
     $feature = factory('chado.feature')->create(['type_id' => $mrna_term->cvterm_id]);
 
-    $this->publish('feature', [], 'feature_id');
+    $this->publish('feature');
 
 
     $entity = chado_get_record_entity_by_table('feature', $feature->feature_id);
@@ -87,4 +112,15 @@ class AdminXrayFormTest extends TripalTestCase {
 
   }
 
+  private function getMRNA_bundle_id() {
+    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
+    $mrna_bundle_id = db_select('chado_bundle', 't')
+      ->fields('t', ['bundle_id'])
+      ->condition('type_id', $mrna_term->cvterm_id)
+      ->condition('data_table', 'feature')
+      ->execute()
+      ->fetchField();
+
+    return $mrna_bundle_id;
+  }
 }

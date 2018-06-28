@@ -1,5 +1,4 @@
 <?php
-require_once "includes/ChadoEntityChildCvterm.inc";
 require_once "includes/api/tripal_cv_xray.api.inc";
 require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 require_once "includes/tripal_cv_xray_cvterm_entity_config.form.inc";
@@ -75,3 +74,100 @@ function tripal_cv_xray_cron_queue_info() {
 
   return $queues;
 }
+
+/**
+ * Implements hook_entity_delete().
+ *
+ * Deleted entities should be removed from the index.
+ */
+
+function tripal_cv_xray_entity_delete($entity, $type) {
+  tripal_cv_xray_index_remove_single_entity($entity, $type);
+}
+
+/**
+ * Implements hook_entity_insert()
+ * When an entity is inserted, see if its in the config.  If so, launch a job
+ * that indexes it for all the configured vocabs.
+ */
+function tripal_cv_xray_entity_insert($entity, $type) {
+  tripal_cv_xray_index_single_entity($entity, $type);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function tripal_cv_xray_entity_update($entity, $type) {
+  tripal_cv_xray_index_single_entity($entity, $type);
+}
+
+/**
+ * Dispatch a job to index the entity.
+ *
+ * @param $entity
+ * @param $type
+ *
+ * @throws \Exception
+ */
+function tripal_cv_xray_index_single_entity($entity, $type) {
+  if ($type != 'TripalEntity') {
+    return;
+  }
+
+  $bundle_name = $entity->bundle;
+  $bundle_id = str_replace('bio_data_', '', $bundle_name);
+
+  // Get config for the entity type
+  $config = db_select('tripal_cv_xray_config', 't')
+    ->fields('t', ['shortname'])
+    ->condition('bundle_id', $bundle_id)
+    ->execute()
+    ->fetchAll();
+
+  if (empty($config)) {
+    return;
+  }
+
+  // Get the bundle object for the indexer
+  $query = db_select('chado_bundle', 'CB');
+  $query->fields('CB', ['bundle_id', 'data_table']);
+  $query->fields('TB', ['label']);
+  $query->join('tripal_bundle', 'TB', 'TB.id = CB.bundle_id');
+  $query->condition('bundle_id', $bundle_id);
+  $bundle = $query->execute()->fetchObject();
+
+  // Extract all db names for the indexer
+  $cvs = [];
+  foreach ($config as $record) {
+    $cvs[] = $record->shortname;
+  }
+
+  $job = new XRayIndexerJob([
+    'entity_id' => $entity->id,
+    'bundle' => $bundle,
+    'cv_shortnames' => array_unique($cvs),
+  ]);
+
+  // If the entity is in the index, remove it so that it can get re-indexed.
+  tripal_cv_xray_index_remove_single_entity($entity, $type);
+
+  XRayQueue::dispatch($job);
+}
+
+/**
+ * Handle removable of entities from the index.
+ * 
+ * @param $entity
+ * @param $type
+ */
+function tripal_cv_xray_index_remove_single_entity($entity, $type) {
+  if ($type != 'TripalEntity') {
+    return;
+  }
+
+  // If the entity is in the index, remove it.
+  db_delete('tripal_cvterm_entity_linker')
+    ->condition('entity_id', $entity->id)
+    ->execute();
+}
+
