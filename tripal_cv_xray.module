@@ -83,7 +83,6 @@ function tripal_cv_xray_cron_queue_info() {
 
 function tripal_cv_xray_entity_delete($entity, $type) {
   tripal_cv_xray_index_remove_single_entity($entity, $type);
-
 }
 
 /**
@@ -99,7 +98,6 @@ function tripal_cv_xray_entity_insert($entity, $type) {
  * Implements hook_entity_update().
  */
 function tripal_cv_xray_entity_update($entity, $type) {
-  //TODO: Do we need to do anything to deal with entities that are already indexed?  Should we remove them from the index first?
   tripal_cv_xray_index_single_entity($entity, $type);
 }
 
@@ -149,6 +147,9 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
     'bundle' => $bundle,
     'cv_shortnames' => array_unique($cvs),
   ]);
+
+  // If the entity is in the index, remove it so that it can get re-indexed.
+  tripal_cv_xray_index_remove_single_entity($entity, $type);
 
   XRayQueue::dispatch($job);
 }
