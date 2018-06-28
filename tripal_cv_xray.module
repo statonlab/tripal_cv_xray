@@ -136,7 +136,7 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
   $query->fields('TB', ['label']);
   $query->join('tripal_bundle', 'TB', 'TB.id = CB.bundle_id');
   $query->condition('bundle_id', $bundle_id);
-  $bundle = $query->fetchObject();
+  $bundle = $query->execute()->fetchObject();
 
   // Extract all db names for the indexer
   $cvs = [];
@@ -147,7 +147,7 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
   $job = new XRayIndexerJob([
     'entity_id' => $entity->id,
     'bundle' => $bundle,
-    'cv_shortnames' => $cvs,
+    'cv_shortnames' => array_unique($cvs),
   ]);
 
   XRayQueue::dispatch($job);
