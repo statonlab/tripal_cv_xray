@@ -4,7 +4,7 @@ namespace Tests\DatabaseSeeders;
 
 use StatonLab\TripalTestSuite\Database\Seeder;
 
-class FastaSeeder extends Seeder
+class GoOboSeeder extends Seeder
 {
     /**
      * Whether to run the seeder automatically before
@@ -13,25 +13,34 @@ class FastaSeeder extends Seeder
      *
      * @var bool
      */
-    public static $auto_run = true;
+    public static $auto_run = false;
 
     /**
-     * Seeds the database with users.
+     * Runs the GO mini OBO.
      *
      * @return void
      */
     public function up()
     {
-        // Add data to the database
+    $loader = new \OBOImporter();
+    $form = [];
+    $form_state = [];
+
+    $form_state['values'] = [
+      'obo_name' => 'GOslim',
+      'obo_url' => 'http://www.geneontology.org/ontology/subsets/goslim_plant.obo',
+    ];
+
+    $loader->formSubmit($form, $form_state);
+    $loader->run();
     }
 
     /**
-     * Cleans up the database from the created users.
+     * Not implemented
      *
      * @return void
      */
     public function down()
     {
-        // Clean up the database
     }
 }

@@ -174,7 +174,7 @@ class XrayIndexerJobTest extends TripalTestCase {
   /**
    * @ticket 39
    * @group failing
-   * The indexer currently ends up with many identical entries: for example,
+   * The indexer previously ended up with many identical entries: for example,
    *   this entity https://hardwoodgenomics.org/bio_data/132373
    * @throws \Exception
    */
