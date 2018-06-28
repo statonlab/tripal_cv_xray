@@ -111,7 +111,7 @@ class XRayIndexerJob implements XRayJob {
    * @throws \Exception
    */
   public function handle() {
-    $entities = $this->getEntitiesChunk($this->entity_id);
+    $entities = $this->getEntities($this->entity_id);
     $data = $this->loadData($entities);
     $this->insertData($data);
 

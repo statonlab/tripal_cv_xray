@@ -168,6 +168,7 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
   $job = new XRayDispatcherJob($bundle_ids, $cvs, 500);
 
   XRayQueue::dispatch($job);
+
   drupal_set_message('Dispatcher job launched successfully.');
   drupal_set_message('You may run the jobs using `drush cron`');
 }

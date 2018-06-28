@@ -13,9 +13,7 @@ class XRayQueue {
     try {
       $job->handle();
     } catch (Exception $exception) {
-      watchdog('tripal_cv_xray', $exception->getMessage(), [], WATCHDOG_ERROR);
-
-      throw $exception;
+      tripal_report_error('tripal_cv_xray', TRIPAL_ERROR, $exception->getMessage());
     }
   }
 
