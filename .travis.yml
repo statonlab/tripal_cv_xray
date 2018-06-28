@@ -17,4 +17,4 @@ script:
   - docker run -it -d --rm --name tripal -v "$(pwd)":/modules/tripal_cv_xray statonlab/tripal3
   - sleep 30 # We pause here so postgres and apache complete booting up
   - docker exec -it tripal drush pm-enable -y tripal_cv_xray
-  - docker exec -it tripal bash -c "cd /modules/tripal_cv_xray && composer install && vendor/bin/tripaltest db:seed ExampleSeeder  &&  && DRUPAL_ROOT=/var/www/html ./vendor/bin/phpunit"
+  - docker exec -it tripal bash -c "cd /modules/tripal_cv_xray && composer install && vendor/bin/tripaltest db:seed GoOboSeeder  &&  && DRUPAL_ROOT=/var/www/html ./vendor/bin/phpunit"
