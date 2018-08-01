@@ -40,7 +40,7 @@ function tripal_cv_xray_menu() {
     'page arguments' => [1, 2, 3, 4],
     //db shortname, accession, anchor entity ID, mapping bundle ID
     'file' => 'includes/tripal_cv_xray_entity_results.inc',
-    'access arguments' => ['view content'],
+    'access arguments' => ['access content'],
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
@@ -156,7 +156,7 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
 
 /**
  * Handle removable of entities from the index.
- * 
+ *
  * @param $entity
  * @param $type
  */
