@@ -117,10 +117,17 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $items = '<p>This vocabulary has no terms loaded</p>';
     }
     else {
-      $items = '<p>Click the + icon (if present) to expand the tree. If ' .
-        'the full ontology or the term heirarchy is not loaded into this site, ' .
-        'then the tree will consist of all terms at the same level. ' .
-        'For some vocabularies, only a subset of terms are loaded</p>' . $items;
+      //Bundle label for target mapped entity bundle
+      $record_type = db_select('public.tripal_bundle', 't')
+        ->fields('t', ['label'])
+        ->condition('t.id', $target_bundle_id)
+        ->execute()
+        ->fetchField();
+
+      $items = '
+<p><strong>Ontology: </strong>' . $vocabulary_name . '</p>
+<p><strong>Record type: </strong> ' . $record_type . '</p>
+<p>Click the + icon (if present) to expand nodes in the tree. To the right of each node is a count of the number of' . $record_type . ' records associated with this term, or any child term, for this organism. Click on the records to view those individual records or create a collection.</p>' . $items;
     }
 
     drupal_add_js([
@@ -134,11 +141,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
     ], 'setting');
 
     $content = [
-      'vocab_table' => [
-        '#type' => 'item',
-        '#title' => 'Details',
-        '#markup' => '<p>A vocabulary is always identified by its short name and sometimes it may offer multiple sub-vocabularies with different names. Both are listed below.</p>',
-      ],
       'vocab_browser' => [
         '#type' => 'item',
         '#title' => 'Term Browser',
