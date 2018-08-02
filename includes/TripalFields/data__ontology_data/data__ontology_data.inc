@@ -200,6 +200,7 @@ class data__ontology_data extends TripalField {
         $query->condition('tct.organism_id', $record_id, '=');
       }
 
+      $query->join('public.tripal_cvterm_entity_linker', 'tcel', 'tcel.entity_id = tbt.entity_id');
       $results = ((int) $query->countQuery()->execute()->fetchField()) > 1;
     }
 
