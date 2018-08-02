@@ -153,7 +153,13 @@ class data__ontology_data extends TripalField {
     $cv_shortname = $settings['ontology'];
     $target_bundle = $settings['target_bundle'];
 
-    $entity->{$field_name}['und'][0]['value'] = $this->shouldAttachBrowser($entity, $target_bundle);
+    $set_value = $this->shouldAttachBrowser($entity, $target_bundle);
+
+   if ( !$set_value) {
+     unset($entity->{$field_name});
+     return;
+   }
+    $entity->{$field_name}['und'][0]['value'] = $set_value;
     $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
   }
