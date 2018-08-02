@@ -528,7 +528,7 @@ class XRayIndexerJob implements XRayJob {
    * @return bool
    */
   public function exists($row) {
-    $cvname = $row['db'] . ':' . $row['accession'];
+    $cvname = $row['database'] . ':' . $row['accession'];
     if (isset($this->visited[$row['entity_id']]) && isset($this->visited[$row['entity_id']][$cvname])) {
       return TRUE;
     }
