@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1345054.svg)](https://doi.org/10.5281/zenodo.1345054)
+
+
 Tripal CV X-ray provides browseable CV trees with entity counts and links.  It does this by associating your entities with CVterms, and then mapping entities of one type onto another. 
 
 # Features
