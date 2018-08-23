@@ -32,8 +32,6 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
 
   if (count($dbs) > 0) {
     foreach ($dbs as $db) {
-
-
       $name = $db['name'];
       $sub_count = tripal_cv_xray_count_indexed_entities($name);
 
@@ -267,7 +265,7 @@ GROUP BY tb.label';
   foreach ($results as $result) {
     $count = $result->count;
     $name = $result->name;
-    $list[] = ['count' => $count, 'name' => $name];
+    $list[] = ['name' => $name, 'count' => $count];
 
   }
 
