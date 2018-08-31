@@ -7,7 +7,7 @@
  * Display:
  * Configuration:
  */
-class data__ontology_data_formatter extends TripalFieldFormatter {
+class data__ontology_data_formatter extends TripalFieldFormatter{
 
   // The default label for this field.
   public static $default_label = 'Ontology data';
@@ -80,24 +80,89 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    *    An element array compatible with that returned by the
    *    hook_field_formatter_view() function.
    */
-  public function view(&$element, $entity_type, $entity, $langcode, $items, $display) {
+  public function view(
+    &$element,
+    $entity_type,
+    $entity,
+    $langcode,
+    $items,
+    $display
+  ) {
     if (!isset($items[0])) {
       return NULL;
     }
+
     elseif (!$items[0]['value']) {
       return NULL;
     }
 
-    $child_entities = $items[0]['value'];
+    // $child_entities = $items[0]['value'];
     $vocabulary_name = $items[0]['cv']['short_name'];
     $target_bundle_id = $items[0]['target'];
+
+    // Add support for our custom tree viewer
+    $wrapper_id = uniqid();
+    drupal_add_js([
+      'cv_lookup' => [
+        [
+          'vocabulary' => $vocabulary_name,
+          'anchor_id' => $entity->id,
+          'target_bundle_id' => $target_bundle_id,
+          'wrapper_id' => $wrapper_id,
+          'field_name' => $this->field['field_name'],
+        ],
+      ],
+    ], 'setting');
+    drupal_add_css(drupal_get_path('module',
+        'tripal') . '/theme/css/tripal.cv_lookup.css');
+    drupal_add_js(drupal_get_path('module',
+        'tripal_cv_xray') . '/theme/js/tripal.cv_lookup.js', 'file');
+
+    if (isset($_GET['page']) && $_GET['page'] >= 1) {
+      $element[0] = static::loadRootTree($this->field['field_name'], TRUE,
+        $vocabulary_name, $target_bundle_id, $entity->id);
+      return;
+    }
+
+    $element[0] = [
+      '#markup' => '<div id="' . $wrapper_id . '">Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i></div>',
+    ];
+  }
+
+  /**
+   * Get's and renders the root tree.
+   *
+   * @throws \Exception
+   *
+   * This prints a json response.
+   */
+  public static function loadRootTree(
+    $field_name,
+    $pager = FALSE,
+    $vocabulary_name = NULL,
+    $target_bundle_id = NULL,
+    $entity_id = null
+  ) {
+    if (is_null($vocabulary_name)) {
+      $vocabulary_name = isset($_GET['vocabulary']) ? $_GET['vocabulary'] : '';
+    }
+    if (is_null($target_bundle_id)) {
+      $target_bundle_id = isset($_GET['target_bundle_id']) ? $_GET['target_bundle_id'] : '';
+    }
+    if (is_null($entity_id)) {
+      $entity_id = isset($_GET['anchor_id']) ? $_GET['anchor_id'] : '';
+    }
+    $path = isset($_GET['path']) ? $_GET['path'] : '';
 
     // Short name
     $vocab = tripal_get_vocabulary_details($vocabulary_name);
 
     // If we can't find the term then just return a message.
     if (!$vocab) {
-      drupal_set_message('The vocabulary ' . $vocabulary_name . ' cannot be found on this site', 'error');
+      drupal_json_output([
+        'error' => 'The vocabulary ' . $vocabulary_name . ' cannot be found on this site',
+        'content' => NULL,
+      ]);
 
       return;
     }
@@ -110,8 +175,10 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
       $has_root = FALSE;
     }
 
-    $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms, $target_bundle_id, $entity->id);
-    $items = tripal_cv_xray_field_lookup_term_children_format($entity->id, $root_terms, $counts, $target_bundle_id);
+    $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms,
+      $target_bundle_id, $entity_id);
+    $items = tripal_cv_xray_field_lookup_term_children_format($entity_id,
+      $root_terms, $counts, $target_bundle_id);
 
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
@@ -124,21 +191,16 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         ->execute()
         ->fetchField();
 
-      $items = '
-<p><strong>Ontology: </strong>' . $vocabulary_name . '</p>
-<p><strong>Record type: </strong> ' . $record_type . '</p>
-<p>Click the + icon (if present) to expand nodes in the tree. To the right of each node is a count of the number of ' . $record_type . ' records associated with this term, or any child term, for this organism.  If no records are mapped to the term or its children, the node will only display the ontology term.</p><p> Click on the records to view those individual records or create a collection.</p>' . $items;
+      $items = '<p><strong>Ontology: </strong>' . $vocabulary_name . '</p>
+                <p><strong>Record type: </strong> ' . $record_type . '</p>
+                <p>Click the + icon (if present) to expand nodes in the tree.
+                 To the right of each node is a count of the number of
+                 ' . $record_type . ' records associated with this term, or any
+                 child term, for this organism. If no records are mapped to the
+                 term or its children, the node will only display the ontology
+                 term.</p><p> Click on the records to view those individual
+                 records or create a collection.</p>' . $items;
     }
-
-    drupal_add_js([
-      'tripal' => [
-        'cv_lookup' => [
-          'vocabulary' => $vocabulary_name,
-          'anchor_id' => $entity->id,
-          'target_bundle_id' => $target_bundle_id,
-        ],
-      ],
-    ], 'setting');
 
     $content = [
       'vocab_browser' => [
@@ -147,18 +209,24 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
         '#markup' => $items,
       ],
     ];
+
     if (!$has_root) {
       $content['pager'] = [
         '#type' => 'markup',
-        '#markup' => theme('pager'),
+        '#markup' => static::ajaxifyStaticPager(theme('pager'), $entity_id,
+          $field_name),
       ];
     }
 
-    // Add support for our custom tree viewer
-    drupal_add_css(drupal_get_path('module', 'tripal') . '/theme/css/tripal.cv_lookup.css');
-    drupal_add_js(drupal_get_path('module', 'tripal_cv_xray') . '/theme/js/tripal.cv_lookup.js', 'file');
-
-    $element[0] = $content;
+    if (!$pager) {
+      drupal_json_output([
+        'error' => FALSE,
+        'content' => render($content),
+      ]);
+    }
+    else {
+      return $content;
+    }
   }
 
   /**
@@ -190,5 +258,26 @@ class data__ontology_data_formatter extends TripalFieldFormatter {
    */
   public function settingsSummary($view_mode) {
     return '';
+  }
+
+  protected static function ajaxifyStaticPager(
+    $pager,
+    $entity_id,
+    $field_name
+  ) {
+    $field_id = 'tripal-entity-' . $entity_id . '--' . $field_name;
+
+    $pager = preg_replace('/href="\/(.*)page=([0-9]+)(.*)?"/',
+      'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', $2)"',
+      $pager);
+
+    $pager = preg_replace('/href="\/.+"/',
+      'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', 0)"',
+      $pager);
+
+    $pager = '<img src="/' . drupal_get_path('module',
+        'tripal') . '/theme/images/ajax-loader.gif" id="' . $field_id . '-spinner" class="tripal-field-ajax-spinner">' . $pager;
+
+    return $pager;
   }
 }
