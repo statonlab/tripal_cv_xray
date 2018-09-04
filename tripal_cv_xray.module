@@ -94,21 +94,11 @@ function tripal_cv_xray_entity_delete($entity, $type) {
   tripal_cv_xray_index_remove_single_entity($entity, $type);
 }
 
-/**
- * Implements hook_entity_insert()
- * When an entity is inserted, see if its in the config.  If so, launch a job
- * that indexes it for all the configured vocabs.
- */
-function tripal_cv_xray_entity_insert($entity, $type) {
-  tripal_cv_xray_index_single_entity($entity, $type);
-}
 
-/**
- * Implements hook_entity_update().
- */
-function tripal_cv_xray_entity_update($entity, $type) {
-  tripal_cv_xray_index_single_entity($entity, $type);
-}
+//TODO:  Replace this with an importer hook
+//function tripal_cv_xray_entity_insert($entity, $type) {
+//  tripal_cv_xray_index_single_entity($entity, $type);
+//}
 
 /**
  * Dispatch a job to index the entity.
