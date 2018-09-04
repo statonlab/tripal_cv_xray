@@ -21,6 +21,15 @@ function tripal_cv_xray_menu() {
     'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
+  $items['tripal_cv_xray/root-tree/%'] = [
+    'page callback' => 'data__ontology_data_formatter::loadRootTree',
+    'page arguments' => [2],
+    'access arguments' => ['access content'],
+    'file' => 'includes/TripalFields/data__ontology_data/data__ontology_data_formatter.inc',
+    'file path' => drupal_get_path('module', 'tripal_cv_xray'),
+    'type' => MENU_CALLBACK,
+  ];
+
   $items['tripal_cv_xray/collections/%/%/%/%'] = [
     'title' => t('Create Collection'),
     'description' => t('Create a downloadable collection.'),
@@ -41,7 +50,7 @@ function tripal_cv_xray_menu() {
     //db shortname, accession, anchor entity ID, mapping bundle ID
     'file' => 'includes/tripal_cv_xray_entity_results.inc',
     'access arguments' => ['access content'],
-    'file_path' => drupal_get_path('module', 'tripal_cv_xray'),
+    'file path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
   $items['cv_entities/lookup/%/%/%/%/children'] = [
