@@ -105,6 +105,8 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#prefix' => '<p>Select a bundle to index.  These are the entities which will be associated with nodes on the CV tree.  For example, if mapping genes to an organism, select the gene bundle.</p>',
   ];
 
+  drupal_set_message('Please note: Submitting this form will delete all existing index data.  You must include, and re-index, previously configured entities and vocabularies.', 'warning');
+  
 
   $form['submit'] = [
     '#type' => 'submit',
