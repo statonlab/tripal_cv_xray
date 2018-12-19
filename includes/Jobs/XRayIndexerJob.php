@@ -196,16 +196,15 @@ class XRayIndexerJob implements XRayJob {
     $this->loadCVTermPathParents($relatedCvterms);
     $relatedProps = $this->loadRelatedProperties($bundle->data_table, $record_ids);
     $this->loadCVTermPathParents($relatedProps);
-
     // Index by record id
     $data = [];
     foreach ($entities as $entity) {
       $data[$entity->record_id] = [
         'entity_id' => $entity->entity_id,
-        'cvterms' => $cvterms[$entity->record_id] ?: [],
-        'properties' => $properties[$entity->record_id] ?: [],
-        'related_cvterms' => $relatedCvterms[$entity->record_id] ?: [],
-        'related_props' => $relatedProps[$entity->record_id] ?: [],
+        'cvterms' => isset($cvterms[$entity->record_id]) ? $cvterms[$entity->record_id] : [],
+        'properties' => isset($properties[$entity->record_id]) ? $properties[$entity->record_id] : [],
+        'related_cvterms' => isset($relatedCvterms[$entity->record_id]) ? $relatedCvterms[$entity->record_id] : [],
+        'related_props' => isset($relatedProps[$entity->record_id]) ? $relatedProps[$entity->record_id] : [],
       ];
     }
     return $data;
