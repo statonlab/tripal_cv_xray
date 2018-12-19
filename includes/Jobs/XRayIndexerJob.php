@@ -196,6 +196,7 @@ class XRayIndexerJob implements XRayJob {
     $this->loadCVTermPathParents($relatedCvterms);
     $relatedProps = $this->loadRelatedProperties($bundle->data_table, $record_ids);
     $this->loadCVTermPathParents($relatedProps);
+
     // Index by record id
     $data = [];
     foreach ($entities as $entity) {
