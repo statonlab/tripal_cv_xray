@@ -90,18 +90,22 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
     $database = $term["vocabulary"]["short_name"];
   }
 
+  if(empty($accessions)) {
+    return $mapped;
+  }
+
   $counts = (int) db_query("SELECT TCEL.database, TCEL.accession, COUNT(TCEL.entity_id) AS term_count
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {{$target_bundle_table}} CB ON CB.entity_id = TCEL.entity_id
               INNER JOIN {chado.{$target_chado_table}} CF ON CF.{$target_chado_column} = CB.record_id
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
-                    AND TCEL.accession IN :(accession)
+                    AND TCEL.accession IN :(accessions)
               GROUP BY TCEL.database, TCEL.accession",
     [
       ':record_id' => $entity->chado_record_id,
       ':database' => $database,
-      ':accession' => $accessions,
+      ':accessions' => $accessions,
     ])->fetchAll();
 
   foreach ($counts as $count) {
