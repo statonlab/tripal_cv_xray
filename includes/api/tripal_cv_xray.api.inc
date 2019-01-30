@@ -100,7 +100,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
               INNER JOIN {chado.{$target_chado_table}} CF ON CF.{$target_chado_column} = CB.record_id
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
-                    AND TCEL.accession IN :(accessions)
+                    AND TCEL.accession IN (:accessions)
               GROUP BY TCEL.database, TCEL.accession",
     [
       ':record_id' => $entity->chado_record_id,
