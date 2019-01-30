@@ -73,7 +73,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
   $target_info = $query->execute()->fetchObject();
 
   $target_chado_table = $target_info->data_table;
-  $target_bundle_table = "public.chado_bio_data_" . $target_bundle_id;
+  $target_bundle_table = "chado_bio_data_" . $target_bundle_id;
 
   $target_chado_column = 'feature_id';
   $record_field = 'organism_id';
@@ -83,28 +83,34 @@ function tripal_cv_xray_lookup_entities_for_terms_count($terms, $target_bundle_i
   }
 
   $mapped = [];
+  $database = '';
+  $accessions = [];
   foreach ($terms as $term) {
-    $accession = $term["accession"];
+    $accessions[] = $term["accession"];
     $database = $term["vocabulary"]["short_name"];
+  }
 
-    $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
+  $counts = (int) db_query("SELECT TCEL.database, TCEL.accession, COUNT(TCEL.entity_id) AS term_count
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {{$target_bundle_table}} CB ON CB.entity_id = TCEL.entity_id
               INNER JOIN {chado.{$target_chado_table}} CF ON CF.{$target_chado_column} = CB.record_id
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
-                    AND TCEL.accession = :accession", [
+                    AND TCEL.accession IN :(accession)
+              GROUP BY TCEL.database, TCEL.accession",
+    [
       ':record_id' => $entity->chado_record_id,
       ':database' => $database,
-      ':accession' => $accession,
-    ])->fetchField();
-    $key = $database . ":" . $accession;
-    $mapped[$key] = $count;
+      ':accession' => $accessions,
+    ])->fetchAll();
+
+  foreach ($counts as $count) {
+    $key = $count['database'] . ":" . $count['accession'];
+    $mapped[$key] = $count['term_count'];
   }
 
   return $mapped;
 }
-
 
 /**
  * Builds the item displayed on the tip of the tree for a given term.
