@@ -19,9 +19,10 @@ before_script:
   - GIT_COMMIT_SHA=$TRAVIS_PULL_REQUEST_SHA
 
 script:
-  - docker run -it -d --rm --name tripal -v "$(pwd)":/modules/tripal_cv_xray statonlab/tripal3
+  - docker run -it -d --rm --name tripal -p 8080:80 -v "$(pwd)":/modules/tripal_cv_xray statonlab/tripal3
   - sleep 30 # We pause here so postgres and apache complete booting up
   - docker exec -it tripal drush pm-enable -y tripal_cv_xray
+  - docker exec -it tripal yum install -y php-pecl-xdebug.x86_64
   - docker exec -it tripal bash -c "cd /modules/tripal_cv_xray && composer install && DRUPAL_ROOT=/var/www/html IS_TRAVIS=TRUE ./vendor/bin/phpunit --coverage-clover ./clover.xml"
 
 
