@@ -20,7 +20,6 @@ function tripal_cv_xray_install() {
   ]);
 }
 
-
 /**
  * Get config table.  This table is necessary for adding entities to the index
  * dynamically via hooks.

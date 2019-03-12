@@ -1,13 +1,14 @@
 <?php
 
+/**
+ * @file
+ * Functions for configuring module behavior.
+ */
 
 /**
- * Form for cvterm entity association job submission.
+ * Implements hook_form().
  *
- * @param $form
- * @param $form_state
- *
- * @return mixed
+ *  Form for cvterm entity association job submission.
  */
 function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
   $welcome = '<h3>Tripal CV X-ray admin</h3>
@@ -20,8 +21,7 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#markup' => $welcome,
   ];
 
-  //create table of previously indexed bundles
-
+  // Create table of previously indexed bundles.
   $headers = [
     'DB Short Name',
     'Number of Total Entities',
@@ -50,9 +50,7 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     ];
   }
 
-
-  //get all site vocabs
-
+  // Get all site vocabs.
   $vocabs = tripal_get_vocabularies();
 
   $rows = [];
@@ -70,7 +68,6 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     ];
   }
 
-
   $header = ['Name', 'Short Name', 'Description'];
 
   $form['cv_select'] = [
@@ -79,7 +76,6 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#options' => $rows,
     '#prefix' => '<p>Select a CV to index.  Only index CVs which you will create browsers for.</p>',
   ];
-
 
   $supported_tables = ['biomaterial', 'feature'];
 
@@ -106,7 +102,6 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
   ];
 
   drupal_set_message('Please note: Submitting this form will delete all existing index data.  You must include, and re-index, previously configured entities and vocabularies.', 'warning');
-  
 
   $form['submit'] = [
     '#type' => 'submit',
@@ -116,12 +111,8 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
   return $form;
 }
 
-
 /**
- * Hook validate for form.
- *
- * @param $form
- * @param $form_state
+ * Implements hook_form_validate().
  */
 function tripal_cv_xray_cvterm_entity_form_validate($form, &$form_state) {
   $bundle_ids = $form_state['values']['bundle_select'];
@@ -140,25 +131,19 @@ function tripal_cv_xray_cvterm_entity_form_validate($form, &$form_state) {
 }
 
 /**
- * Hook submit for form.
- *
- * @param $form
- * @param $form_state
+ * Implements hook_form_submit().
  */
 function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
 
   $bundle_ids = $form_state['values']['bundle_select'];
   $cvs = $form_state['values']['cv_select'];
 
-
   $bundle_ids = array_keys(array_filter($bundle_ids));
-  //Note: this is the SHORT NAME.  IE THE CHADO DB NAME.
+  // Note: this is the SHORT NAME.  IE THE CHADO DB NAME.
   $cvs = array_keys(array_filter($cvs));
 
-
-  //First, empty the table.  We MUST do this currently, otherwise you'll never be able to remove CV/entity combos.
-  //TODO: It would be better if one could set CV/entity combos individually, IE only index GO terms for mRNAs, but sequence INTERPRO for biomaterials.
-
+  // First, empty the table.  We MUST do this currently, otherwise you'll never be able to remove CV/entity combos.
+  // TODO: It would be better if one could set CV/entity combos individually, IE only index GO terms for mRNAs, but sequence INTERPRO for biomaterials.
   db_query('TRUNCATE {tripal_cv_xray_config}');
 
   tripal_cv_xray_save_db_bundle_config($bundle_ids, $cvs);
@@ -174,12 +159,14 @@ function tripal_cv_xray_cvterm_entity_form_submit($form, &$form_state) {
 /**
  * Create a bundle config record.
  *
- * @param $bundle_ids
- * @param $db_names
+ * @param array $bundle_ids
+ *   Array of bundle ids to index.
+ * @param array $db_names
+ *   Array of db names to index for bundles.
  *
  * @throws \Exception
  */
-function tripal_cv_xray_save_db_bundle_config($bundle_ids, $db_names) {
+function tripal_cv_xray_save_db_bundle_config(array $bundle_ids, array $db_names) {
   foreach ($db_names as $db_name) {
     foreach ($bundle_ids as $bundle_id) {
       $result = db_select('tripal_cv_xray_config', 'TCXC')
@@ -201,6 +188,9 @@ function tripal_cv_xray_save_db_bundle_config($bundle_ids, $db_names) {
   }
 }
 
+/**
+ * Retrieve currently indexed dbs.
+ */
 function tripal_cv_xray_retrieve_indexed_dbs() {
 
   $list = [];
@@ -227,7 +217,16 @@ function tripal_cv_xray_retrieve_indexed_dbs() {
 
 }
 
-function tripal_cv_xray_count_indexed_entities($short_name) {
+/**
+ * Counts entiites currently indexed for db.
+ *
+ * @param string $short_name
+ *   DB shortname.
+ *
+ * @return array
+ *   Array with keys name and count.
+ */
+function tripal_cv_xray_count_indexed_entities(string $short_name) {
 
   $count = NULL;
   $list = [];

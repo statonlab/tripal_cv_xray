@@ -4,9 +4,10 @@ require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 require_once "includes/tripal_cv_xray_cvterm_entity_config.form.inc";
 
 /**
- * implement hook menu
+ * implement hook menu.
  *
- * @return array Menu items
+ * @return array
+ * Menu items.
  */
 function tripal_cv_xray_menu() {
   $admin_url_base = 'admin/tripal/extension/tripal_cv_xray';
