@@ -27,4 +27,5 @@ script:
 
 
 after_script:
-  - ./cc-test-reporter after-build clover.xml --debug -t clover -p /var/www/html/sites/all/modules/custom/tripal_cv_xray --exit-code $TRAVIS_TEST_RESULT
+  - ls
+  - ./cc-test-reporter after-build clover.xml--debug -t clover -p /var/www/html/sites/all/modules/custom/tripal_cv_xray --exit-code $TRAVIS_TEST_RESULT
