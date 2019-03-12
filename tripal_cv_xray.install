@@ -1,6 +1,6 @@
 <?php
 /**
- * Hook Schema
+ * Hook Schema.
  */
 function tripal_cv_xray_schema() {
   $schema = [];
@@ -125,7 +125,7 @@ function tripal_cv_xray_cvterm_entity_linker() {
 }
 
 /**
- * Uninstall
+ * Implements hook_uninstall.
  */
 function tripal_cv_xray_uninstall() {
   if (db_table_exists('tripal_cvterm_entity_index')) {

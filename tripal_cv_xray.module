@@ -109,7 +109,7 @@ function tripal_cv_xray_entity_delete($entity, $type) {
  *
  * @throws \Exception
  */
-function tripal_cv_xray_index_single_entity($entity, $type) {
+function tripal_cv_xray_index_single_entity(TripalEntity $entity, string $type) {
   if ($type != 'TripalEntity') {
     return;
   }
@@ -157,10 +157,10 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
 /**
  * Handle removable of entities from the index.
  *
- * @param $entity
- * @param $type
+ * @param TripalEntity $entity
+ * @param string $type
  */
-function tripal_cv_xray_index_remove_single_entity($entity, $type) {
+function tripal_cv_xray_index_remove_single_entity(TripalEntity $entity, string $type) {
   if ($type != 'TripalEntity') {
     return;
   }
