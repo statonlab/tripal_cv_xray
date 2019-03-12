@@ -4,9 +4,10 @@ require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 require_once "includes/tripal_cv_xray_cvterm_entity_config.form.inc";
 
 /**
- * implement hook menu
+ * implement hook menu.
  *
- * @return array Menu items
+ * @return array
+ * Menu items.
  */
 function tripal_cv_xray_menu() {
   $admin_url_base = 'admin/tripal/extension/tripal_cv_xray';
@@ -108,7 +109,7 @@ function tripal_cv_xray_entity_delete($entity, $type) {
  *
  * @throws \Exception
  */
-function tripal_cv_xray_index_single_entity($entity, $type) {
+function tripal_cv_xray_index_single_entity(TripalEntity $entity, string $type) {
   if ($type != 'TripalEntity') {
     return;
   }
@@ -156,10 +157,10 @@ function tripal_cv_xray_index_single_entity($entity, $type) {
 /**
  * Handle removable of entities from the index.
  *
- * @param $entity
- * @param $type
+ * @param TripalEntity $entity
+ * @param string $type
  */
-function tripal_cv_xray_index_remove_single_entity($entity, $type) {
+function tripal_cv_xray_index_remove_single_entity(TripalEntity $entity, string $type) {
   if ($type != 'TripalEntity') {
     return;
   }
