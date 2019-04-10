@@ -152,7 +152,6 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
     if (is_null($entity_id)) {
       $entity_id = isset($_GET['anchor_id']) ? $_GET['anchor_id'] : '';
     }
-    $path = isset($_GET['path']) ? $_GET['path'] : '';
 
     // Short name
     $vocab = tripal_get_vocabulary_details($vocabulary_name);

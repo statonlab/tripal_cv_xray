@@ -112,7 +112,7 @@ function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id,
 
     $grand = tripal_get_term_children($child['vocabulary']['short_name'], $child['accession']);
     $num_grand = count($grand);
-    $items .= '<li vocabulary = "' . $child['vocabulary']['short_name'] . '" ' . 'accession = "' . $child['accession'] . '" ' . 'children = "' . $num_grand . '" ' . 'state = "closed" ' . 'class = "cv - lookup - tree - node">';
+    $items .= '<li vocabulary="' . $child['vocabulary']['short_name'] . '" accession="' . $child['accession'] . '" children="' . $num_grand . '" state = "closed" ' . 'class = "cv-lookup-tree-node">';
 
     $class = 'tree-node-closed';
     if ($num_grand == 0) {
