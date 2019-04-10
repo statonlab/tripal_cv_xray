@@ -7,7 +7,7 @@
  * Data:
  * Assumptions:
  */
-class data__ontology_data extends TripalField {
+class data__ontology_data extends TripalField{
 
   /**
    * Field label.
@@ -155,10 +155,10 @@ class data__ontology_data extends TripalField {
 
     $set_value = $this->shouldAttachBrowser($entity, $target_bundle);
 
-   if ( !$set_value) {
-     unset($entity->{$field_name});
-     return;
-   }
+    if (!$set_value) {
+      unset($entity->{$field_name});
+      return;
+    }
     $entity->{$field_name}['und'][0]['value'] = $set_value;
     $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
@@ -178,7 +178,7 @@ class data__ontology_data extends TripalField {
 
     $query = db_select('public.chado_bundle', 'tb');
     $query->fields('tb', ['bundle_id', 'data_table']);
-    $query->condition('bundle_id', $target_bundle_id, '=');
+    $query->condition('bundle_id', $target_bundle_id);
     $target_info = $query->execute()->fetchObject();
 
     $bundle_id = $target_info->bundle_id;
@@ -189,18 +189,22 @@ class data__ontology_data extends TripalField {
 
     if ($entity->chado_table == 'organism') {
       $query = db_select($target_bundle_table, 'tbt');
-      $query->join('chado.' . $target_chado_table, "tct", 'tbt.record_id = tct.' . $target_record_column);
+      $query->join('chado.' . $target_chado_table,
+        "tct",
+        'tbt.record_id = tct.' . $target_record_column);
       $query->join('public.tripal_entity', 'te', 'te.id = tbt.entity_id');
 
       if ($target_chado_table == 'biomaterial') {
-        $query->condition('tct.taxon_id', $record_id, '=');
+        $query->condition('tct.taxon_id', $record_id);
       }
       else {
         // Works with feature in mind, and will work when chado table has organism_id column
-        $query->condition('tct.organism_id', $record_id, '=');
+        $query->condition('tct.organism_id', $record_id);
       }
 
-      $query->join('public.tripal_cvterm_entity_linker', 'tcel', 'tcel.entity_id = tbt.entity_id');
+      $query->join('public.tripal_cvterm_entity_linker',
+        'tcel',
+        'tcel.entity_id = tbt.entity_id');
       $results = ((int) $query->countQuery()->execute()->fetchField()) > 1;
     }
 

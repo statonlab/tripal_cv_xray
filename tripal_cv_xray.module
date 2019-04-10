@@ -2,6 +2,7 @@
 require_once "includes/api/tripal_cv_xray.api.inc";
 require_once "includes/Jobs/tripal_cv_xray.jobs.inc";
 require_once "includes/tripal_cv_xray_cvterm_entity_config.form.inc";
+require_once "includes/tripal_cv_xray.fields.inc";
 
 /**
  * implement hook menu.
@@ -94,7 +95,6 @@ function tripal_cv_xray_cron_queue_info() {
 function tripal_cv_xray_entity_delete($entity, $type) {
   tripal_cv_xray_index_remove_single_entity($entity, $type);
 }
-
 
 //TODO:  Replace this with an importer hook
 //function tripal_cv_xray_entity_insert($entity, $type) {
