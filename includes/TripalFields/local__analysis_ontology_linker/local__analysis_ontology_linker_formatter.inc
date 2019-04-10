@@ -7,7 +7,7 @@
  * Display:
  * Configuration:
  */
-class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
+class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter {
 
   // The default label for this field.
   public static $default_label = 'Ontology Browser';
@@ -36,7 +36,11 @@ class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
     foreach ($items as $item) {
       $element[] = [
         '#type' => 'item',
-        '#markup' => l('View ontology browser for ' . $item['value']['title'], "bio_data/{$item['value']['entity_id']}?tripal_pane=group_ontology"),
+        '#markup' => l('View ontology browser for ' . $item['value']['title'], "bio_data/{$item['value']['entity_id']}", [
+          'query' => [
+            'tripal_pane' => 'group_ontology',
+          ],
+        ]),
       ];
     }
   }
