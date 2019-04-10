@@ -1,7 +1,25 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_form.
+ *
+ * @param $db_shortname
+ *   shortname for ontology DB.
+ *
+ * @param $accession
+ *
+ * @param $anchor_id
+ *   Entity ID to map on to (or on to?).
+ *
+ * @param $mapping_bundle_id
+ *
+ *   Bundle ID of entity being mapped (or mapping onto).
+ *
+ * @return mixed
  */
 function tripal_cv_xray_collections_form($form, &$form_state, $db_shortname, $accession, $anchor_id, $mapping_bundle_id) {
   $bundle_table = 'chado_bio_data_' . $mapping_bundle_id;
@@ -22,10 +40,10 @@ function tripal_cv_xray_collections_form($form, &$form_state, $db_shortname, $ac
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession
               ORDER BY TCEL.entity_id ASC", [
-    ':record_id' => $anchor->chado_record_id,
-    ':database' => $short_name,
-    ':accession' => $accession,
-  ])->fetchAll();
+                ':record_id' => $anchor->chado_record_id,
+                ':database' => $short_name,
+                ':accession' => $accession,
+              ])->fetchAll();
 
   $form['bundle_type'] = ['#value' => $bundle, '#type' => 'value'];
   $form['entities'] = ['#value' => $entities, '#type' => 'value'];
@@ -57,8 +75,6 @@ function tripal_cv_xray_collections_form($form, &$form_state, $db_shortname, $ac
     '#type' => 'submit',
     '#value' => 'Create Collection',
   ];
-
-
 
   return $form;
 }

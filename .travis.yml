@@ -8,13 +8,23 @@ services:
   - docker
 
 env:
-  - DRUPAL_ROOT=/var/www/html
+  - DRUPAL_ROOT=/var/www/html IS_TRAVIS=TRUE CC_TEST_REPORTER_ID=cd54f3f662acee008adb36ae849de0ddd5e3e07f8ef269bcfc9a37ff8bf9494a
 
 before_script:
   - docker pull statonlab/tripal3
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build --debug
+  - GIT_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
+  - GIT_COMMIT_SHA=$TRAVIS_PULL_REQUEST_SHA
 
 script:
-  - docker run -it -d --rm --name tripal -v "$(pwd)":/modules/tripal_cv_xray statonlab/tripal3
+  - docker run -it -d --rm --name tripal -p 8080:80 -v "$(pwd)":/modules/tripal_cv_xray statonlab/tripal3
   - sleep 30 # We pause here so postgres and apache complete booting up
   - docker exec -it tripal drush pm-enable -y tripal_cv_xray
-  - docker exec -it tripal bash -c "cd /modules/tripal_cv_xray && composer install && DRUPAL_ROOT=/var/www/html ./vendor/bin/phpunit"
+  - docker exec -it tripal yum install -y php-pecl-xdebug.x86_64
+  - docker exec -it tripal bash -c "cd /modules/tripal_cv_xray && composer install && DRUPAL_ROOT=/var/www/html IS_TRAVIS=TRUE ./vendor/bin/phpunit --coverage-clover ./clover.xml"
+
+
+after_script:
+  - ./cc-test-reporter after-build clover.xml--debug -t clover -p /var/www/html/sites/all/modules/custom/tripal_cv_xray --exit-code $TRAVIS_TEST_RESULT

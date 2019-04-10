@@ -1,7 +1,11 @@
 <?php
 
 /**
- * Page for viewing entities mapepd to a specific term from a particular anchor
+ * @file
+ */
+
+/**
+ * Page for viewing entities mapped to a specific term from a particular anchor
  * entity. IE, all the genes with term X:Y for organism Z.
  *
  * @param $db_shortname
@@ -9,7 +13,8 @@
  * @param $anchor_id
  * @param $mapping_bundle_id
  *
- * @return string|NULL
+ * @return string|null
+ *
  * @throws \Exception
  */
 function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapping_bundle_id) {
@@ -38,7 +43,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $accession = $term["accession"];
   $short_name = $term["vocabulary"]["short_name"];
 
-  // Load paginated mapped entities
+  // Load paginated mapped entities.
   if ($mapping_entity->data_table === 'biomaterial') {
     $record_field = 'taxon_id';
   }
@@ -54,10 +59,10 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession", [
-    ':record_id' => $anchor->chado_record_id,
-    ':database' => $short_name,
-    ':accession' => $accession,
-  ])->fetchField();
+                      ':record_id' => $anchor->chado_record_id,
+                      ':database' => $short_name,
+                      ':accession' => $accession,
+                    ])->fetchField();
 
   $current_page = pager_default_initialize($count, $per_page);
 
@@ -71,17 +76,12 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
                     AND TCEL.accession = :accession
               ORDER BY TCEL.entity_id ASC
               OFFSET :offset LIMIT :limit", [
-    ':record_id' => $anchor->chado_record_id,
-    ':database' => $short_name,
-    ':accession' => $accession,
-    ':offset' => $current_page * $per_page,
-    ':limit' => $per_page,
-  ])->fetchAll();
-
-  //  $entities_to_load = [];
-  //  foreach ($entities as $one) {
-  //    $entities_to_load[] = $one->entity_id;
-  //  }
+                ':record_id' => $anchor->chado_record_id,
+                ':database' => $short_name,
+                ':accession' => $accession,
+                ':offset' => $current_page * $per_page,
+                ':limit' => $per_page,
+              ])->fetchAll();
 
   $rows = [];
   foreach ($entities as $entity) {
@@ -101,7 +101,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $content = '';
 
-  // Make sure Tripal collections are supported
+  // Make sure Tripal collections are supported.
   if (function_exists('tripal_create_collection')) {
     $content = '<p>' . $collection_link . '</p>';
   }
