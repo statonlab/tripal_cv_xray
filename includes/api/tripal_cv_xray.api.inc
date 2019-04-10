@@ -148,8 +148,7 @@ function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id,
         $anchor_entity_id,
         $target_bundle_id,
       ];
-      $items .= l("  {
-    $num_mapped} " . $record_word, implode('/', $query_arguments));
+      $items .= l("{$num_mapped} {$record_word}", implode('/', $query_arguments));
     }
     $items .= '</li>';
   }
