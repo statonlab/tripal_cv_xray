@@ -106,7 +106,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $targe
 function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id, array $children, $onscreen_entity_maps, $target_bundle_id) {
   $map = $onscreen_entity_maps;
 
-  $items = '<ul id="tripal - cv - lookup - tree">';
+  $items = '<ul id="tripal-cv-lookup-tree">';
   foreach ($children as $child) {
     $child_name = $child['vocabulary']['short_name'] . ":" . $child['accession'];
 
