@@ -37,7 +37,7 @@ function tripal_cv_xray_bundle_fields_info($entity_type, $bundle) {
   // Because we are expecting data housed in Chado we can use the 'data_table'
   // property of the bundle to determine if this bundle is really the one
   // we want the field to be associated with.
-  if (isset($bundle->data_table) AND ($bundle->data_table == $my_data_table)) {
+  if (isset($bundle->data_table) AND ($bundle->data_table == 'analysis')) {
     // First add my term.
     tripal_insert_cvterm(array(
       'id' => 'local:analysis_ontology_linker',
@@ -88,7 +88,7 @@ function tripal_cv_xray_bundle_fields_info($entity_type, $bundle) {
 function tripal_cv_xray_bundle_instances_info($entity_type, $bundle) {
   $instances = array();
 
-  if (isset($bundle->data_table) AND ($bundle->data_table == $my_data_table)) {
+  if (isset($bundle->data_table) AND ($bundle->data_table == 'analysis')) {
     $field_name = 'local__analysis_ontology_linker';
     $field_type = 'local__analysis_ontology_linker';
     $instances[$field_name] =  array(

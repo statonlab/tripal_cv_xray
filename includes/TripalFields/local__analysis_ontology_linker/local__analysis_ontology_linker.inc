@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @class
  * Purpose:
@@ -6,7 +7,7 @@
  * Data:
  * Assumptions:
  */
-class local__analysis_ontology_linker extends ChadoField {
+class local__analysis_ontology_linker extends ChadoField{
 
   // --------------------------------------------------------------------------
   //                     EDITABLE STATIC CONSTANTS
@@ -38,23 +39,23 @@ class local__analysis_ontology_linker extends ChadoField {
   // Drupal will automatically change these settings for all fields.
   // Once instances exist for a field type then these settings cannot be
   // changed.
-  public static $default_settings = array(
+  public static $default_settings = [
     'storage' => 'field_chado_storage',
-     // It is expected that all fields set a 'value' in the load() function.
-     // In many cases, the value may be an associative array of key/value pairs.
-     // In order for Tripal to provide context for all data, the keys should
-     // be a controlled vocabulary term (e.g. rdfs:type). Keys in the load()
-     // function that are supported by the query() function should be
-     // listed here.
-     'searchable_keys' => array(),
-  );
+    // It is expected that all fields set a 'value' in the load() function.
+    // In many cases, the value may be an associative array of key/value pairs.
+    // In order for Tripal to provide context for all data, the keys should
+    // be a controlled vocabulary term (e.g. rdfs:type). Keys in the load()
+    // function that are supported by the query() function should be
+    // listed here.
+    'searchable_keys' => [],
+  ];
 
   // Indicates the download formats for this field.  The list must be the
   // name of a child class of the TripalFieldDownloader.
-  public static $download_formatters = array(
-     'TripalTabDownloader',
-     'TripalCSVDownloader',
-  );
+  public static $download_formatters = [
+    'TripalTabDownloader',
+    'TripalCSVDownloader',
+  ];
 
   // Provide a list of instance specific settings. These can be access within
   // the instanceSettingsForm.  When the instanceSettingsForm is submitted
@@ -63,7 +64,7 @@ class local__analysis_ontology_linker extends ChadoField {
   // If you override this variable in a child class be sure to replicate the
   // term_name, term_vocab, term_accession and term_fixed keys as these are
   // required for all TripalFields.
-  public static $default_instance_settings = array(
+  public static $default_instance_settings = [
     // The DATABASE name, as it appears in chado.db.  This also builds the link-out url.  In most cases this will simply be the CV name.  In some cases (EDAM) this will be the SUBONTOLOGY.
     'term_vocabulary' => 'local',
     // The name of the term.
@@ -85,7 +86,7 @@ class local__analysis_ontology_linker extends ChadoField {
     'chado_column' => '',
     // The base table.
     'base_table' => '',
-  );
+  ];
 
   // A boolean specifying that users should not be allowed to create
   // fields and instances of this field type through the UI. Such
@@ -99,55 +100,137 @@ class local__analysis_ontology_linker extends ChadoField {
   // the user but otherwise provides no data.
   public static $no_data = FALSE;
 
-   /**
-    * @see ChadoField::load()
-    *
-    **/
-
+  /**
+   * @throws \Exception
+   * @see ChadoField::load()
+   */
   public function load($entity) {
 
     // ChadoFields automatically load the chado column specified in the
     // default settings above. If that is all you need then you don't even
     // need to implement this function. However, if you need to add any
     // additional data to be used in the display, you should add it here.
-    parent::load($entity);
+    if (!db_table_exists('organism_analysis')) {
+      return;
+    }
+
+    $analysis = $entity->chado_record;
+
+    // Get related organisms
+    $organisms = $this->getOrganisms($analysis);
+    $bundles = $this->getFeatureBundles();
+
+    if ($this->shouldAttach($organisms, $bundles)) {
+      $data = [];
+
+      foreach ($organisms as $organism) {
+        $eid = chado_get_record_entity_by_table('organism', $organism);
+        $data[] = [
+          'value' => [
+            'title' => $this->getEntityTitle($eid),
+            'entity_id' => $eid,
+          ],
+        ];
+      }
+
+      $entity->local__analysis_ontology_linker['und'] = $data;
+    }
   }
 
+  /**
+   * @param $entity_id
+   *
+   * @return mixed
+   */
+  public function getEntityTitle($entity_id) {
+    return db_query('SELECT title FROM {tripal_entity} WHERE id=:id', [
+      ':id' => $entity_id,
+    ])->fetchField();
+  }
 
+  /**
+   * @param array $organisms
+   * @param array $feature_bundles
+   *
+   * @return bool
+   */
+  public function shouldAttach(array $organisms, array $feature_bundles) {
+    foreach ($feature_bundles as $bundle) {
+      $bundle_table = 'chado_bio_data_' . $bundle;
+      $query = db_select('chado.feature', 'F');
+      $query->fields('F');
+      $query->join($bundle_table, 'BT', 'F.feature_id = BT.record_id');
+      $query->join('tripal_cvterm_entity_linker', 'TCEL', 'TCEL.entity_id = BT.entity_id');
+      $query->condition('F.organism_id', $organisms, 'IN');
+      if ((int) $query->countQuery()->execute()->fetchField() > 0) {
+        return TRUE;
+      }
+    }
 
-    /**
-    * @see ChadoField::query()
-    *
-    **/
+    return FALSE;
+  }
+
+  /**
+   * @return array Array of integers
+   */
+  public function getFeatureBundles() {
+    $bundles = db_query('SELECT bundle_id FROM {chado_bundle} WHERE data_table = :table', [
+      ':table' => 'feature',
+    ])->fetchAll();
+
+    return array_map(function ($bundle) {
+      return $bundle->bundle_id;
+    }, $bundles);
+  }
+
+  /**
+   * @param $analysis
+   *
+   * @return mixed
+   * @throws \Exception
+   */
+  public function getOrganisms($analysis) {
+    $organisms = chado_query('SELECT OA.organism_id FROM {organism_analysis} OA
+                        WHERE analysis_id=:id', [
+      ':id' => $analysis->analysis_id,
+    ])->fetchAll();
+
+    return array_map(function ($organism) {
+      return $organism->organism_id;
+    }, $organisms);
+  }
+
+  /**
+   * @see ChadoField::query()
+   *
+   **/
 
   public function query($query, $condition) {
   }
 
-    /**
-    * @see ChadoField::queryOrder()
-    *
-    **/
+  /**
+   * @see ChadoField::queryOrder()
+   *
+   **/
 
   public function queryOrder($query, $order) {
   }
 
+  /**
+   * @see ChadoField::elementInfo()
+   *
+   **/
 
-    /**
-    * @see ChadoField::elementInfo()
-    *
-    **/
-    
   public function elementInfo() {
     $field_term = $this->getFieldTermID();
-    return array(
-      $field_term => array(
-        'operations' => array('eq', 'ne', 'contains', 'starts'),
+    return [
+      $field_term => [
+        'operations' => ['eq', 'ne', 'contains', 'starts'],
         'sortable' => TRUE,
         'searchable' => TRUE,
-      ),
-    );
+      ],
+    ];
   }
-
 }
 
 
