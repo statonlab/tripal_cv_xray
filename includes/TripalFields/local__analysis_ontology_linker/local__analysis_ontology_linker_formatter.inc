@@ -31,14 +31,12 @@ class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
 
   /**
    * @see ChadoFieldFormatter::View()
-   *
-   **/
-
+   */
   public function view(&$element, $entity_type, $entity, $langcode, $items, $display) {
     foreach ($items as $item) {
       $element[] = [
         '#type' => 'item',
-        '#markup' => l($item['value']['title'], "bio_data/{$item['value']['entity_id']}"),
+        '#markup' => l('View ontology browser for ' . $item['value']['title'], "bio_data/{$item['value']['entity_id']}?tripal_pane=group_ontology"),
       ];
     }
   }

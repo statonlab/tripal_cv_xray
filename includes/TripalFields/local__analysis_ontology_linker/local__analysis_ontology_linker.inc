@@ -7,7 +7,7 @@
  * Data:
  * Assumptions:
  */
-class local__analysis_ontology_linker extends ChadoField{
+class local__analysis_ontology_linker extends ChadoField {
 
   // --------------------------------------------------------------------------
   //                     EDITABLE STATIC CONSTANTS
@@ -105,12 +105,13 @@ class local__analysis_ontology_linker extends ChadoField{
    * @see ChadoField::load()
    */
   public function load($entity) {
+    $entity->local__analysis_ontology_linker['und'] = NULL;
 
     // ChadoFields automatically load the chado column specified in the
     // default settings above. If that is all you need then you don't even
     // need to implement this function. However, if you need to add any
     // additional data to be used in the display, you should add it here.
-    if (!db_table_exists('organism_analysis')) {
+    if (!db_table_exists('chado.organism_analysis')) {
       return;
     }
 
@@ -155,6 +156,10 @@ class local__analysis_ontology_linker extends ChadoField{
    * @return bool
    */
   public function shouldAttach(array $organisms, array $feature_bundles) {
+    if (empty($organisms)) {
+      return FALSE;
+    }
+
     foreach ($feature_bundles as $bundle) {
       $bundle_table = 'chado_bio_data_' . $bundle;
       $query = db_select('chado.feature', 'F');
@@ -203,16 +208,13 @@ class local__analysis_ontology_linker extends ChadoField{
   /**
    * @see ChadoField::query()
    *
-   **/
-
+   */
   public function query($query, $condition) {
   }
 
   /**
    * @see ChadoField::queryOrder()
-   *
-   **/
-
+   */
   public function queryOrder($query, $order) {
   }
 
