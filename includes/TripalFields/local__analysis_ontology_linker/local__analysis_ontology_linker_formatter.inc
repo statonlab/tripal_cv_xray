@@ -38,7 +38,8 @@ class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
     foreach ($items as $item) {
       $element[] = [
         '#type' => 'item',
-        '#markup' => l($item['value']['title'], "bio_data/{$item['value']['entity_id']}");];
+        '#markup' => l($item['value']['title'], "bio_data/{$item['value']['entity_id']}"),
+      ];
     }
   }
 
