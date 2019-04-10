@@ -119,7 +119,7 @@ function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id,
       $class = 'tree-node-single';
     }
 
-    $items .= '<i class = "tree - node - icon ' . $class . '"></i>';
+    $items .= '<i class = "tree-node-icon ' . $class . '"></i>';
     $items .= l($child['name'], 'cv/lookup/' . $child['vocabulary']['short_name'] . '/' . $child['accession'], ['attributes' => ['target' => '_blank']]);
 
     if ($child['accession'] != $child['name']) {
