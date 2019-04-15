@@ -7,7 +7,7 @@
  * Display:
  * Configuration:
  */
-class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter {
+class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
 
   // The default label for this field.
   public static $default_label = 'Ontology Browser';
@@ -34,13 +34,24 @@ class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter {
    */
   public function view(&$element, $entity_type, $entity, $langcode, $items, $display) {
     foreach ($items as $item) {
+
+      $go_link = l("Gene Ontology browser", "bio_data/{$item['value']['entity_id']}", [
+        'query' => [
+          'tripal_pane' => 'group_ontology',
+        ],
+      ]);
+
+      $kegg_link = l("KEGG Ontology browser", "bio_data/{$item['value']['entity_id']}", [
+        'query' => [
+          'tripal_pane' => 'group_kegg_browser',
+        ],
+      ]);
+
+      $content = "View $go_link or $kegg_link for {$item['value']['title']}";
+
       $element[] = [
         '#type' => 'item',
-        '#markup' => l('View ontology browser for ' . $item['value']['title'], "bio_data/{$item['value']['entity_id']}", [
-          'query' => [
-            'tripal_pane' => 'group_ontology',
-          ],
-        ]),
+        '#markup' => $content,
       ];
     }
   }
