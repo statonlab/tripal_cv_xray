@@ -160,7 +160,7 @@ function tripal_cv_xray_index_single_entity(TripalEntity $entity, string $type) 
  * @param TripalEntity $entity
  * @param string $type
  */
-function tripal_cv_xray_index_remove_single_entity(TripalEntity $entity, string $type) {
+function tripal_cv_xray_index_remove_single_entity($entity, string $type) {
   if ($type != 'TripalEntity') {
     return;
   }
