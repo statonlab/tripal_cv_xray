@@ -17,7 +17,7 @@
  *
  * @throws \Exception
  */
-function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapping_bundle_id) {
+function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapping_bundle_id, $analysis_id = NULL) {
   $per_page = 20;
   $anchor = tripal_load_entity('TripalEntity', [$anchor_id]);
   $anchor = reset($anchor);
@@ -34,27 +34,37 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $accession = $term["accession"];
   $short_name = $term["vocabulary"]["short_name"];
-
+  $target_chado_column = 'feature_id';
+  $record_field = 'organism_id';
+  $analysis_join_query = '';
+  $analysis_condition = '';
   // Load paginated mapped entities.
   if ($mapping_entity->data_table === 'biomaterial') {
     $record_field = 'taxon_id';
   }
-  else {
-    $record_field = 'organism_id';
+  elseif ($analysis_id !== NULL) {
+    $analysis_join_query = "INNER JOIN {chado.analysisfeature} AF ON AF.feature_id = CF.{$target_chado_column}";
+    $analysis_condition = "AND AF.analysis_id = :analysis_id";
   }
 
   $bundle_table = 'chado_bio_data_' . $mapping_bundle_id;
-  $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
-              FROM {tripal_cvterm_entity_linker} TCEL
-              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
-              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
-              WHERE CF.{$record_field} = :record_id 
-                    AND TCEL.database = :database
-                    AND TCEL.accession = :accession", [
+  $args = [
     ':record_id' => $anchor->chado_record_id,
     ':database' => $short_name,
     ':accession' => $accession,
-  ])->fetchField();
+  ];
+  if (!empty($analysis_condition)) {
+    $args[':analysis_id'] = $analysis_id;
+  }
+  $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
+              FROM {tripal_cvterm_entity_linker} TCEL
+              INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.{$target_chado_column} = CB.record_id
+              {$analysis_join_query}
+              WHERE CF.{$record_field} = :record_id 
+                    {$analysis_condition} 
+                    AND TCEL.database = :database
+                    AND TCEL.accession = :accession", $args)->fetchField();
 
   $current_page = pager_default_initialize($count, $per_page);
 
@@ -62,8 +72,10 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {tripal_entity} TE ON TE.id = TCEL.entity_id
               INNER JOIN {{$bundle_table}} CB ON CB.entity_id = TCEL.entity_id
-              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.feature_id = CB.record_id
+              INNER JOIN {chado.{$mapping_entity->data_table}} CF ON CF.{$target_chado_column} = CB.record_id
+              {$analysis_join_query}
               WHERE CF.{$record_field} = :record_id 
+                    {$analysis_condition} 
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession
               ORDER BY TCEL.entity_id ASC
