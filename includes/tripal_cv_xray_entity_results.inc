@@ -24,22 +24,14 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   $mapping_entity = tripal_load_bundle_entity(['id' => $mapping_bundle_id]);
   $map_label = $mapping_entity->label;
 
-  $query = db_select("chado.cvterm", 'CVT');
-  $query->innerjoin('chado.dbxref', 'DBX', 'DBX.dbxref_id = CVT.dbxref_id');
-  $query->innerjoin('chado.db', 'DB', 'DBX.db_id = DB.db_id');
-  $query->fields('CVT', ["cvterm_id"])
-    ->condition('DBX.accession', $accession)
-    ->condition('DB.name', $db_shortname);
+  $term = tripal_get_term_details($db_shortname, $accession);
 
-  $term_id = $query->execute()->fetchField();
-
-  if (!$term_id) {
+  if ($term === FALSE) {
     tripal_set_message("Could not look up term {$db_shortname}:{$accession}", TRIPAL_ERROR);
 
     return NULL;
   }
 
-  $term = tripal_get_term_details($db_shortname, $accession);
   $accession = $term["accession"];
   $short_name = $term["vocabulary"]["short_name"];
 
@@ -59,10 +51,10 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
               WHERE CF.{$record_field} = :record_id 
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession", [
-                      ':record_id' => $anchor->chado_record_id,
-                      ':database' => $short_name,
-                      ':accession' => $accession,
-                    ])->fetchField();
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+  ])->fetchField();
 
   $current_page = pager_default_initialize($count, $per_page);
 
@@ -76,12 +68,12 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
                     AND TCEL.accession = :accession
               ORDER BY TCEL.entity_id ASC
               OFFSET :offset LIMIT :limit", [
-                ':record_id' => $anchor->chado_record_id,
-                ':database' => $short_name,
-                ':accession' => $accession,
-                ':offset' => $current_page * $per_page,
-                ':limit' => $per_page,
-              ])->fetchAll();
+    ':record_id' => $anchor->chado_record_id,
+    ':database' => $short_name,
+    ':accession' => $accession,
+    ':offset' => $current_page * $per_page,
+    ':limit' => $per_page,
+  ])->fetchAll();
 
   $rows = [];
   foreach ($entities as $entity) {
@@ -91,13 +83,12 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $term_link = l($term['name'] . ' (' . $short_name . ':' . $accession . ')', 'cv/lookup/' . $short_name . '/' . $accession);
   $anchor_link = l($anchor->title, 'bio_data/' . $anchor_id);
-  $collection_link = l('Create Downloadable Collection', 'tripal_cv_xray/collections/' . $db_shortname . '/' .
-    $accession . '/' . $anchor_id . '/' . $mapping_bundle_id, [
-      'attributes' => [
-        'id' => 'create-collection-btn',
-        'class' => 'btn btn-primary',
-      ],
-    ]);
+  $collection_link = l('Create Downloadable Collection', 'tripal_cv_xray/collections/' . $db_shortname . '/' . $accession . '/' . $anchor_id . '/' . $mapping_bundle_id, [
+    'attributes' => [
+      'id' => 'create-collection-btn',
+      'class' => 'btn btn-primary',
+    ],
+  ]);
 
   $content = '';
 
