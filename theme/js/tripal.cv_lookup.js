@@ -1,5 +1,7 @@
 (function ($) {
 
+  var load_request = {}
+
   Drupal.behaviors.TripalCVLookup = {
     attach: attach
   }
@@ -23,7 +25,16 @@
       loadTree(cv_lookup)
     })
 
-    $.get(baseurl + '/tripal_cv_xray/root-tree/' + cv_lookup.field_name, {
+    if (typeof load_request[wrapper_id] === 'undefined') {
+      load_request[wrapper_id] = null
+    }
+
+    // Cancel any pending requests before establishing a new one
+    if (load_request[wrapper_id] !== null) {
+      load_request[wrapper_id].abort()
+    }
+
+    load_request[wrapper_id] = $.get(baseurl + '/tripal_cv_xray/root-tree/' + cv_lookup.field_name, {
       vocabulary         : vocabulary,
       anchor_id          : anchor_id,
       target_bundle_id   : target_bundle_id,
@@ -36,6 +47,8 @@
           new Tree($(this), cv_lookup, 'expand')
         })
       }
+
+      load_request = null
     })
   }
 
