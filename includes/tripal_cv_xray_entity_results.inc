@@ -68,6 +68,11 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
 
   $current_page = pager_default_initialize($count, $per_page);
 
+  $args += [
+    ':offset' => $current_page * $per_page,
+    ':limit' => $per_page,
+  ];
+
   $entities = db_query("SELECT TE.id, TE.title
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {tripal_entity} TE ON TE.id = TCEL.entity_id
@@ -79,13 +84,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
                     AND TCEL.database = :database
                     AND TCEL.accession = :accession
               ORDER BY TCEL.entity_id ASC
-              OFFSET :offset LIMIT :limit", [
-    ':record_id' => $anchor->chado_record_id,
-    ':database' => $short_name,
-    ':accession' => $accession,
-    ':offset' => $current_page * $per_page,
-    ':limit' => $per_page,
-  ])->fetchAll();
+              OFFSET :offset LIMIT :limit", $args)->fetchAll();
 
   $rows = [];
   foreach ($entities as $entity) {
