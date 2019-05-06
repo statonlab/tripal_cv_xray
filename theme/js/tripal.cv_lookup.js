@@ -48,7 +48,11 @@
       if (!data.error) {
         $wrapper.html(data.content)
         $('.tree-node-closed', '#' + wrapper_id).click(function (event) {
-          new Tree($(this), cv_lookup, 'expand')
+          new Tree($(this), {
+            analysis_id     : analysis_id,
+            anchor_id       : anchor_id,
+            target_bundle_id: target_bundle_id
+          }, 'expand')
         })
       }
       else {
@@ -62,6 +66,7 @@
   function Tree(element, options, op) {
     this.anchor_id        = options.anchor_id
     this.target_bundle_id = options.target_bundle_id
+    this.analysis_id      = options.analysis_id
     this[op](element)
   }
 
@@ -73,6 +78,8 @@
     var parent           = $(item).parent('li')
     var anchor_id        = this.anchor_id
     var target_bundle_id = this.target_bundle_id
+    var analysis_id      = this.analysis_id
+
     parent.children('i').removeClass('tree-node-open')
     parent.children('i').addClass('tree-node-closed')
     parent.children('ul').remove()
@@ -81,8 +88,9 @@
     parent.children('i').unbind('click')
     parent.children('i').click(function (event) {
       new Tree($(this), {
-        target_bundle_id,
-        anchor_id
+        target_bundle_id: target_bundle_id,
+        anchor_id       : anchor_id,
+        analysis_id     : analysis_id
       }, 'expand')
     })
   }
@@ -96,6 +104,7 @@
     var accession        = parent.attr('accession')
     var anchor_id        = this.anchor_id
     var target_bundle_id = this.target_bundle_id
+    var analysis_id      = this.analysis_id
 
     parent.children('i').removeClass('tree-node-closed')
     parent.children('i').addClass('tree-node-loading')
@@ -104,14 +113,15 @@
     parent.children('i').unbind('click')
     parent.children('i').click(function (event) {
       new Tree($(this), {
-        target_bundle_id,
-        anchor_id
+        target_bundle_id: target_bundle_id,
+        anchor_id       : anchor_id,
+        analysis_id     : analysis_id
       }, 'collapse')
     })
 
     $.ajax({
       //    //$vocabulary, $accession, $target_bundle_id, $anchor_entity_id)
-      url    : baseurl + '/cv_entities/lookup/' + vocabulary + '/' + accession + '/' + this.target_bundle_id + '/' + this.anchor_id + '/children',
+      url    : baseurl + '/cv_entities/lookup/' + vocabulary + '/' + accession + '/' + target_bundle_id + '/' + anchor_id + '/' + analysis_id + '/children',
       success: function (data) {
         parent.append(data.content)
         parent.children('i').removeClass('tree-node-loading')
@@ -121,8 +131,9 @@
 
         nodes.click(function (event) {
           new Tree($(this), {
-            target_bundle_id,
-            anchor_id
+            target_bundle_id: target_bundle_id,
+            anchor_id       : anchor_id,
+            analysis_id     : analysis_id
           }, 'expand')
         })
       }

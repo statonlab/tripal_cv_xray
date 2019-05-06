@@ -118,7 +118,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $targe
  *
  * @return string
  */
-function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id, array $children, $onscreen_entity_maps, $target_bundle_id) {
+function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id, array $children, $onscreen_entity_maps, $target_bundle_id, $analysis_id = NULL) {
   $map = $onscreen_entity_maps;
 
   $items = '<ul id="tripal-cv-lookup-tree">';
@@ -163,6 +163,9 @@ function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id,
         $anchor_entity_id,
         $target_bundle_id,
       ];
+      if ($analysis_id) {
+        $query_arguments[] = $analysis_id;
+      }
       $items .= l(" {$num_mapped} {$record_word}", implode('/', $query_arguments));
     }
     $items .= '</li>';
@@ -246,10 +249,10 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
  * @param $target_bundle_id
  * @param $anchor_entity_id
  */
-function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id) {
+function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id, $analysis_id = null) {
   $children = tripal_get_term_children($vocabulary, $accession);
 
-  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id);
+  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id, $analysis_id);
 
   // Format results.
   $response = [
