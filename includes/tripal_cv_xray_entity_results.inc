@@ -109,6 +109,7 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
   }
 
   if ($analysis_id) {
+    dpm('test');
     $entity_id = chado_get_record_entity_by_table('analysis', $analysis_id);
     $title = db_query('SELECT title FROM {tripal_entity} WHERE id = :id', [':id' => $entity_id]);
     $content .= '<p>Records related to '.$title.'</p>';
