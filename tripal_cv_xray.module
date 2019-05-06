@@ -56,6 +56,19 @@ function tripal_cv_xray_menu() {
     'file path' => drupal_get_path('module', 'tripal_cv_xray'),
   ];
 
+  // Same as above but with analysis id
+  $items['cv_entities/%/%/%/%/%'] = [
+    'type' => MENU_NORMAL_ITEM,
+    'title' => t('Matching Entities'),
+    'description' => 'Mapped entities associated with a CVterm',
+    'page callback' => 'tripal_cv_xray_entity_view',
+    'page arguments' => [1, 2, 3, 4, 5],
+    //db shortname, accession, anchor entity ID, mapping bundle ID
+    'file' => 'includes/tripal_cv_xray_entity_results.inc',
+    'access arguments' => ['access content'],
+    'file path' => drupal_get_path('module', 'tripal_cv_xray'),
+  ];
+
   $items['cv_entities/lookup/%/%/%/%/children'] = [
     'access arguments' => ['access content'],
     'page callback' => 'tripal_cv_xray_entity_child_lookup_ajax',

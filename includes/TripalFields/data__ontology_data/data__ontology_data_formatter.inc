@@ -173,7 +173,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
     }
 
     $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms, $target_bundle_id, $entity_id, $analysis_id);
-    $items = tripal_cv_xray_field_lookup_term_children_format($entity_id, $root_terms, $counts, $target_bundle_id);
+    $items = tripal_cv_xray_field_lookup_term_children_format($entity_id, $root_terms, $counts, $target_bundle_id, $analysis_id);
 
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
