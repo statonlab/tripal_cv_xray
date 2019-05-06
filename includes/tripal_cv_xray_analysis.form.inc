@@ -20,6 +20,9 @@ function tripal_cv_xray_analysis_form(array $form, array &$form_state, $organism
   foreach ($analyses as $analysis) {
     $options[$analysis->analysis_id] = $analysis->name;
   }
+  foreach ($analyses as $analysis) {
+    $options[$analysis->analysis_id] = $analysis->name;
+  }
 
   // Do not change the name! Changing this affects the JS.
   $form['cv_xray_analysis_id'] = [

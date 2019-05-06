@@ -19,7 +19,6 @@
     var wrapper_id       = cv_lookup.wrapper_id
     var $wrapper         = $('#' + wrapper_id)
     var $analysis_field  = $wrapper.parents('.cv_xray_container').first().find('select[name="cv_xray_analysis_id"]').first()
-    console.log($analysis_field)
     var analysis_id      = $analysis_field ? $analysis_field.val() : null
 
     $wrapper.html('Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i>')
