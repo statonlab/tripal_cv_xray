@@ -56,7 +56,7 @@
         $wrapper.html('We\'ve encountered an error. Please try again later.')
       }
 
-      load_request = null
+      load_request[wrapper_id] = null
     })
   }
 
