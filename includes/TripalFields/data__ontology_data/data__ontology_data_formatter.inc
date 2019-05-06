@@ -123,7 +123,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
       return;
     }
 
-    $markup = '<div class="pt-2">' . $content . '<div id="' . $wrapper_id . '">Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i></div></div>';
+    $markup = '<div class="cv_xray_container pt-2">' . $content . '<div id="' . $wrapper_id . '">Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i></div></div>';
     $element[0] = [
       '#markup' => $markup,
     ];

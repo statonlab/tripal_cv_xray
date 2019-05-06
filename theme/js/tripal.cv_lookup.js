@@ -17,7 +17,7 @@
     var target_bundle_id = cv_lookup.target_bundle_id
     var vocabulary       = cv_lookup.vocabulary
     var wrapper_id       = cv_lookup.wrapper_id
-    var $analysis_field  = $(wrapper_id).find('[name="cv_xray_analysis_id"]')
+    var $analysis_field  = $(wrapper_id).parents('.cv_xray_container').first().find('[name="cv_xray_analysis_id"]')
     var analysis_id      = $analysis_field.lenght > 0 ? $analysis_field.val() : null
 
     $('#'+wrapper_id).html('Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i>')
