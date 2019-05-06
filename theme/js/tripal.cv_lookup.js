@@ -20,10 +20,14 @@
     var $analysis_field  = $(wrapper_id).find('[name="cv_xray_analysis_id_' + anchor_id + '"]')
     var analysis_id      = $analysis_field.lenght > 0 ? $analysis_field.val() : null
 
-    $analysis_field.unbind('change')
-    $analysis_field.on('change', function () {
-      loadTree(cv_lookup)
-    })
+    $('#'+wrapper_id).html('Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i>')
+
+    if(analysis_id) {
+      $analysis_field.unbind('change')
+      $analysis_field.on('change', function () {
+        loadTree(cv_lookup)
+      })
+    }
 
     if (typeof load_request[wrapper_id] === 'undefined') {
       load_request[wrapper_id] = null
