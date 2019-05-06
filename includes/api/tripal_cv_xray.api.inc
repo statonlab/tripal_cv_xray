@@ -249,10 +249,10 @@ function tripal_cv_xray_fetch_associated_entities($anchor_entity, $target_bundle
  * @param $target_bundle_id
  * @param $anchor_entity_id
  */
-function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id) {
+function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $target_bundle_id, $anchor_entity_id, $analysis_id = null) {
   $children = tripal_get_term_children($vocabulary, $accession);
 
-  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id);
+  $counts = tripal_cv_xray_lookup_entities_for_terms_count($children, $target_bundle_id, $anchor_entity_id, $analysis_id);
 
   // Format results.
   $response = [
