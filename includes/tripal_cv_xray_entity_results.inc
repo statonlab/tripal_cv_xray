@@ -108,6 +108,12 @@ function tripal_cv_xray_entity_view($db_shortname, $accession, $anchor_id, $mapp
     $content = '<p>' . $collection_link . '</p>';
   }
 
+  if ($analysis_id) {
+    $entity_id = chado_get_record_entity_by_table('analysis', $analysis_id);
+    $title = db_query('SELECT title FROM {tripal_entity} WHERE id = :id', [':id' => $entity_id]);
+    $content .= '<p>Records related to '.$title.'</p>';
+  }
+
   $content .= '<p>The below ' . $map_label . ' are associated with 
               ' . $anchor_link . ' and the vocabulary term ' . $term_link . '. There are ' . $count . ' ' . $map_label . ' associated. Showing ' . $per_page . ' per page.</p>';
 
