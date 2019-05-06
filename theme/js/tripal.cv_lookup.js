@@ -6,24 +6,36 @@
 
   function attach(context, settings) {
     settings.cv_lookup.map(function (cv_lookup) {
-      var anchor_id        = cv_lookup.anchor_id
-      var target_bundle_id = cv_lookup.target_bundle_id
-      var vocabulary       = cv_lookup.vocabulary
-      var wrapper_id       = cv_lookup.wrapper_id
+      loadTree(cv_lookup)
+    })
+  }
 
-      $.get(baseurl + '/tripal_cv_xray/root-tree/'+cv_lookup.field_name, {
-        vocabulary      : vocabulary,
-        anchor_id       : anchor_id,
-        target_bundle_id: target_bundle_id,
-        // path            : window.location.pathname
-      }, function (data) {
-        if (!data.error) {
-          $('#' + wrapper_id).html(data.content)
-          $('.tree-node-closed', '#' + wrapper_id).click(function (event) {
-            new Tree($(this), cv_lookup, 'expand')
-          })
-        }
-      })
+  function loadTree(cv_lookup) {
+    var anchor_id        = cv_lookup.anchor_id
+    var target_bundle_id = cv_lookup.target_bundle_id
+    var vocabulary       = cv_lookup.vocabulary
+    var wrapper_id       = cv_lookup.wrapper_id
+    var $analysis_field  = $(wrapper_id).find('[name="cv_xray_analysis_id_' + anchor_id + '"]')
+    var analysis_id      = $analysis_field.lenght > 0 ? $analysis_field.val() : null
+
+    $analysis_field.unbind('change')
+    $analysis_field.on('change', function () {
+      loadTree(cv_lookup)
+    })
+
+    $.get(baseurl + '/tripal_cv_xray/root-tree/' + cv_lookup.field_name, {
+      vocabulary         : vocabulary,
+      anchor_id          : anchor_id,
+      target_bundle_id   : target_bundle_id,
+      cv_xray_analysis_id: analysis_id
+      // path            : window.location.pathname
+    }, function (data) {
+      if (!data.error) {
+        $('#' + wrapper_id).html(data.content)
+        $('.tree-node-closed', '#' + wrapper_id).click(function (event) {
+          new Tree($(this), cv_lookup, 'expand')
+        })
+      }
     })
   }
 

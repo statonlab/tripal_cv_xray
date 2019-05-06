@@ -45,10 +45,11 @@ function tripal_cv_xray_lookup_entities_for_terms(array $terms, int $target_bund
  * @param int $target_bundle_id
  * @param int $entity_id
  *   Anchor entity id.
+ * @param int $analysis_id If provided, results will be limited to analysis ids
  *
  * @return array
  */
-function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $target_bundle_id, int $entity_id) {
+function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $target_bundle_id, int $entity_id, int $analysis_id = NULL) {
   // Loading entity here is fine since the static cache holds all of the values
   // anyway so there won't be any performance issues.
   $entity = tripal_load_entity('TripalEntity', [$entity_id]);
@@ -65,9 +66,15 @@ function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $targe
 
   $target_chado_column = 'feature_id';
   $record_field = 'organism_id';
+  $analysis_join_query = '';
+  $analysis_condition = '';
   if ($target_chado_table === 'biomaterial') {
     $record_field = 'taxon_id';
     $target_chado_column = 'biomaterial_id';
+  }
+  elseif ($analysis_id !== NULL) {
+    $analysis_join_query = "INNER JOIN {chado.analysisfeature} AF ON AF.feature_id = CF.{$target_chado_column}";
+    $analysis_condition = "AF.analysis_id = :analysis_id";
   }
 
   $mapped = [];
@@ -75,17 +82,25 @@ function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $targe
     $accession = $term["accession"];
     $database = $term["vocabulary"]["short_name"];
 
+    $args = [
+      ':record_id' => $entity->chado_record_id,
+      ':database' => $database,
+      ':accession' => $accession,
+    ];
+
+    if (!empty($analysis_condition)) {
+      $args[':analysis_id'] = $analysis_id;
+    }
+
     $count = (int) db_query("SELECT COUNT(TCEL.entity_id)
               FROM {tripal_cvterm_entity_linker} TCEL
               INNER JOIN {{$target_bundle_table}} CB ON CB.entity_id = TCEL.entity_id
               INNER JOIN {chado.{$target_chado_table}} CF ON CF.{$target_chado_column} = CB.record_id
+              {$analysis_join_query}
               WHERE CF.{$record_field} = :record_id 
+                    {$analysis_condition}
                     AND TCEL.database = :database
-                    AND TCEL.accession = :accession", [
-      ':record_id' => $entity->chado_record_id,
-      ':database' => $database,
-      ':accession' => $accession,
-    ])->fetchField();
+                    AND TCEL.accession = :accession", $args)->fetchField();
     $key = $database . ":" . $accession;
     $mapped[$key] = $count;
   }

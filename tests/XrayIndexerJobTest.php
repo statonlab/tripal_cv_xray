@@ -5,6 +5,8 @@ namespace Tests;
 use StatonLab\TripalTestSuite\DBTransaction;
 use StatonLab\TripalTestSuite\TripalTestCase;
 use Tests\DatabaseSeeders\GoOboSeeder;
+use XRayIndexerJob;
+use DrupalQueue;
 
 class XrayIndexerJobTest extends TripalTestCase {
 
@@ -115,7 +117,7 @@ class XrayIndexerJobTest extends TripalTestCase {
    */
   private function runQueuedJobs() {
     /** @var \SystemQueue $queue */
-    $queue = \DrupalQueue::get('tripal_cv_xray');
+    $queue = DrupalQueue::get('tripal_cv_xray');
 
     // Run all jobs in the queue
     while ($item = $queue->claimItem()) {
@@ -133,7 +135,7 @@ class XrayIndexerJobTest extends TripalTestCase {
    * @throws \Exception
    */
   public function test_XrayIndexerNoDuplicate() {
-    $job = new \XRayIndexerJob([
+    $job = new XRayIndexerJob([
       'bundle' => $this->bundle,
       'cv_shortnames' => ['GO'],
     ]);

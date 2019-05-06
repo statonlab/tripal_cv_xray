@@ -529,6 +529,8 @@ class XRayIndexerJob implements XRayJob {
    */
   public function exists($row) {
     $cvname = $row['database'] . ':' . $row['accession'];
+
+    // Reduce the number of database queries by saving the result in memory
     if (isset($this->visited[$row['entity_id']]) && isset($this->visited[$row['entity_id']][$cvname])) {
       return TRUE;
     }

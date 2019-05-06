@@ -34,6 +34,9 @@ class local__analysis_ontology_linker_formatter extends ChadoFieldFormatter{
    */
   public function view(&$element, $entity_type, $entity, $langcode, $items, $display) {
     foreach ($items as $item) {
+      if (empty($item['value'])) {
+        continue;
+      }
 
       $go_link = l("Gene Ontology browser", "bio_data/{$item['value']['entity_id']}", [
         'query' => [
