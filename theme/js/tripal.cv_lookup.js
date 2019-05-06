@@ -18,8 +18,8 @@
     var vocabulary       = cv_lookup.vocabulary
     var wrapper_id       = cv_lookup.wrapper_id
     var $wrapper         = $('#' + wrapper_id)
-    var $analysis_field  = $wrapper.parents('.cv_xray_container').first().find('[name="cv_xray_analysis_id"]')
-    var analysis_id      = $analysis_field.lenght > 0 ? $analysis_field.val() : null
+    var $analysis_field  = $wrapper.parents('.cv_xray_container').first().find('input[name="cv_xray_analysis_id"]').first()
+    var analysis_id      = $analysis_field ? $analysis_field.val() : null
 
     $wrapper.html('Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i>')
 
@@ -51,6 +51,9 @@
         $('.tree-node-closed', '#' + wrapper_id).click(function (event) {
           new Tree($(this), cv_lookup, 'expand')
         })
+      }
+      else {
+        $wrapper.html('We\'ve encountered an error. Please try again later.')
       }
 
       load_request = null
