@@ -81,12 +81,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
    *    hook_field_formatter_view() function.
    */
   public function view(
-    &$element,
-    $entity_type,
-    $entity,
-    $langcode,
-    $items,
-    $display
+    &$element, $entity_type, $entity, $langcode, $items, $display
   ) {
     if (!isset($items[0])) {
       return NULL;
@@ -99,6 +94,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
     // $child_entities = $items[0]['value'];
     $vocabulary_name = $items[0]['cv']['short_name'];
     $target_bundle_id = $items[0]['target'];
+    $target_table = $items[0]['target_table'];
 
     // Add support for our custom tree viewer
     $wrapper_id = uniqid();
@@ -113,36 +109,36 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
         ],
       ],
     ], 'setting');
-    drupal_add_css(drupal_get_path('module',
-        'tripal') . '/theme/css/tripal.cv_lookup.css');
-    drupal_add_js(drupal_get_path('module',
-        'tripal_cv_xray') . '/theme/js/tripal.cv_lookup.js', 'file');
+    drupal_add_css(drupal_get_path('module', 'tripal') . '/theme/css/tripal.cv_lookup.css');
+    drupal_add_js(drupal_get_path('module', 'tripal_cv_xray') . '/theme/js/tripal.cv_lookup.js', 'file');
+
+    $content = '';
+    if ($target_table === 'feature') {
+      $form = drupal_get_form('tripal_cv_xray_analysis_form', $entity->chado_record->organism_id);
+      $content = drupal_render($form);
+    }
 
     if (isset($_GET['page']) && $_GET['page'] >= 1) {
-      $element[0] = static::loadRootTree($this->field['field_name'], TRUE,
-        $vocabulary_name, $target_bundle_id, $entity->id);
+      $element[0] = static::loadRootTree($this->field['field_name'], TRUE, $vocabulary_name, $target_bundle_id, $entity->id);
       return;
     }
 
+    $markup = '<div class="pt-2">' . $content . '<div id="' . $wrapper_id . '">Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i></div></div>';
     $element[0] = [
-      '#markup' => '<div id="' . $wrapper_id . '">Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i></div>',
+      '#markup' => $markup,
     ];
   }
 
   /**
    * Get's and renders the root tree.
    *
+   * @return array
    * @throws \Exception
    *
    * This prints a json response.
+   *
    */
-  public static function loadRootTree(
-    $field_name,
-    $pager = FALSE,
-    $vocabulary_name = NULL,
-    $target_bundle_id = NULL,
-    $entity_id = null
-  ) {
+  public static function loadRootTree($field_name, $pager = FALSE, $vocabulary_name = NULL, $target_bundle_id = NULL, $entity_id = NULL, $analysis_id = NULL) {
     if (is_null($vocabulary_name)) {
       $vocabulary_name = isset($_GET['vocabulary']) ? $_GET['vocabulary'] : '';
     }
@@ -152,7 +148,9 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
     if (is_null($entity_id)) {
       $entity_id = isset($_GET['anchor_id']) ? $_GET['anchor_id'] : '';
     }
-
+    if (is_null($analysis_id)) {
+      $analysis_id = !empty($_GET['cv_xray_analysis_id'])? intval($_GET['cv_xray_analysis_id']) : NULL;
+    }
     // Short name
     $vocab = tripal_get_vocabulary_details($vocabulary_name);
 
@@ -163,7 +161,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
         'content' => NULL,
       ]);
 
-      return;
+      return [];
     }
 
     // Get the root terms
@@ -174,10 +172,8 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
       $has_root = FALSE;
     }
 
-    $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms,
-      $target_bundle_id, $entity_id);
-    $items = tripal_cv_xray_field_lookup_term_children_format($entity_id,
-      $root_terms, $counts, $target_bundle_id);
+    $counts = tripal_cv_xray_lookup_entities_for_terms_count($root_terms, $target_bundle_id, $entity_id, $analysis_id);
+    $items = tripal_cv_xray_field_lookup_term_children_format($entity_id, $root_terms, $counts, $target_bundle_id);
 
     if (count($root_terms) == 0) {
       $items = '<p>This vocabulary has no terms loaded</p>';
@@ -212,8 +208,7 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
     if (!$has_root) {
       $content['pager'] = [
         '#type' => 'markup',
-        '#markup' => static::ajaxifyStaticPager(theme('pager'), $entity_id,
-          $field_name),
+        '#markup' => static::ajaxifyStaticPager(theme('pager'), $entity_id, $field_name),
       ];
     }
 
@@ -260,22 +255,15 @@ class data__ontology_data_formatter extends TripalFieldFormatter{
   }
 
   protected static function ajaxifyStaticPager(
-    $pager,
-    $entity_id,
-    $field_name
+    $pager, $entity_id, $field_name
   ) {
     $field_id = 'tripal-entity-' . $entity_id . '--' . $field_name;
 
-    $pager = preg_replace('/href="\/(.*)page=([0-9]+)(.*)?"/',
-      'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', $2)"',
-      $pager);
+    $pager = preg_replace('/href="\/(.*)page=([0-9]+)(.*)?"/', 'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', $2)"', $pager);
 
-    $pager = preg_replace('/href="\/.+"/',
-      'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', 0)"',
-      $pager);
+    $pager = preg_replace('/href="\/.+"/', 'href="javascript:void(0)" onclick="tripal_navigate_field_pager(\'' . $field_id . '\', 0)"', $pager);
 
-    $pager = '<img src="/' . drupal_get_path('module',
-        'tripal') . '/theme/images/ajax-loader.gif" id="' . $field_id . '-spinner" class="tripal-field-ajax-spinner">' . $pager;
+    $pager = '<img src="/' . drupal_get_path('module', 'tripal') . '/theme/images/ajax-loader.gif" id="' . $field_id . '-spinner" class="tripal-field-ajax-spinner">' . $pager;
 
     return $pager;
   }

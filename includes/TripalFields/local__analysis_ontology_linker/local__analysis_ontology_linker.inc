@@ -7,7 +7,7 @@
  * Data:
  * Assumptions:
  */
-class local__analysis_ontology_linker extends ChadoField {
+class local__analysis_ontology_linker extends ChadoField{
 
   // --------------------------------------------------------------------------
   //                     EDITABLE STATIC CONSTANTS
@@ -113,6 +113,10 @@ class local__analysis_ontology_linker extends ChadoField {
     // additional data to be used in the display, you should add it here.
     if (!db_table_exists('chado.organism_analysis')) {
       return;
+    }
+
+    if ($entity->chado_table !== 'analysis') {
+      return NULL;
     }
 
     $analysis = $entity->chado_record;

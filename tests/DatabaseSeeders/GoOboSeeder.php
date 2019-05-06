@@ -2,11 +2,8 @@
 
 namespace Tests\DatabaseSeeders;
 
-//require_once __DIR__.'/../bootstrap.php';
-
-
 use StatonLab\TripalTestSuite\Database\Seeder;
-
+use OBOImporter;
 
 class GoOboSeeder extends Seeder {
 
@@ -27,7 +24,7 @@ class GoOboSeeder extends Seeder {
   public function up() {
     module_load_include('inc', 'tripal_chado', 'includes/TripalImporter/OBOImporter');
 
-    $loader = new \OBOImporter();
+    $loader = new OBOImporter();
     $form = [];
     $form_state = [];
 
@@ -43,6 +40,50 @@ class GoOboSeeder extends Seeder {
     ]);
 
     $loader->run();
+
+    // Pick three go terms that are all nearby
+    $termA = chado_get_cvterm(['id' => 'GO:0003723']);
+    $termB = chado_get_cvterm(['id' => 'GO:0008135']);
+    $termC = chado_get_cvterm(['id' => 'GO:0003677']);
+
+    $terms = [
+      $termA,
+      $termB,
+      $termC,
+    ];
+
+    $mrna_term = chado_get_cvterm(['id' => 'SO:0000234']);
+    $mrna = factory('chado.feature')->create(['type_id' => $mrna_term->cvterm_id]);
+
+    foreach ($terms as $term) {
+      factory('chado.feature_cvterm')->create([
+        'feature_id' => $mrna->feature_id,
+        'cvterm_id' => $term->cvterm_id,
+      ]);
+    }
+
+    $bundle_id = db_select('chado_bundle', 'cb')
+      ->fields('cb', ['bundle_id'])
+      ->condition('type_id', $mrna_term->cvterm_id)
+      ->execute()
+      ->fetchField();
+
+    $bundle = tripal_load_bundle_entity(['id' => $bundle_id]);
+    $bundle->bundle_id = $bundle_id;
+
+    // Tell our config table that we want to index this entity type
+    // We delete first to make sure we don't create any duplicate entries
+    db_delete('tripal_cv_xray_config')
+      ->condition('shortname', 'GO')
+      ->condition('bundle_id', $bundle->bundle_id)
+      ->execute();
+    db_insert('tripal_cv_xray_config')
+      ->fields([
+        'shortname' => 'GO',
+        'bundle_id' => $bundle->bundle_id,
+      ])->execute();
+
+    $this->publish('feature');
   }
 
   /**

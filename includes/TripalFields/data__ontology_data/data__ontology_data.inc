@@ -159,9 +159,18 @@ class data__ontology_data extends TripalField{
       unset($entity->{$field_name});
       return;
     }
+    $bundle = db_select('chado_bundle', 'CB')
+      ->fields('CB')
+      ->condition('bundle_id', $target_bundle)
+      ->execute()
+      ->fetchObject();
+
+    $target_chado_table = $bundle->data_table;
+
     $entity->{$field_name}['und'][0]['value'] = $set_value;
     $entity->{$field_name}['und'][0]['cv']['short_name'] = $cv_shortname;
     $entity->{$field_name}['und'][0]['target'] = $target_bundle;
+    $entity->{$field_name}['und'][0]['target_table'] = $target_chado_table;
   }
 
   /**
