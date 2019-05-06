@@ -74,7 +74,7 @@ function tripal_cv_xray_lookup_entities_for_terms_count(array $terms, int $targe
   }
   elseif ($analysis_id !== NULL) {
     $analysis_join_query = "INNER JOIN {chado.analysisfeature} AF ON AF.feature_id = CF.{$target_chado_column}";
-    $analysis_condition = "AF.analysis_id = :analysis_id";
+    $analysis_condition = "AND AF.analysis_id = :analysis_id";
   }
 
   $mapped = [];

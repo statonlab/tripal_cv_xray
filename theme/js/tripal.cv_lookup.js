@@ -18,7 +18,7 @@
     var vocabulary       = cv_lookup.vocabulary
     var wrapper_id       = cv_lookup.wrapper_id
     var $wrapper         = $('#' + wrapper_id)
-    var $analysis_field  = $wrapper.parents('.cv_xray_container').first().find('input[name="cv_xray_analysis_id"]').first()
+    var $analysis_field  = $wrapper.parents('.cv_xray_container').first().find('select[name="cv_xray_analysis_id"]').first()
     var analysis_id      = $analysis_field ? $analysis_field.val() : null
 
     $wrapper.html('Loading browser. Please wait. <i class="fa fa-spin fa-refresh"></i>')
@@ -44,7 +44,6 @@
       anchor_id          : anchor_id,
       target_bundle_id   : target_bundle_id,
       cv_xray_analysis_id: analysis_id
-      // path            : window.location.pathname
     }, function (data) {
       if (!data.error) {
         $wrapper.html(data.content)
@@ -56,7 +55,7 @@
         $wrapper.html('We\'ve encountered an error. Please try again later.')
       }
 
-      load_request = null
+      load_request[wrapper_id] = null
     })
   }
 
