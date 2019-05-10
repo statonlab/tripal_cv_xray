@@ -147,13 +147,10 @@ function tripal_cv_xray_field_lookup_term_children_format(int $anchor_entity_id,
     }
     $num_mapped = is_array($child_mapping) ? count($child_mapping) : $child_mapping;
 
-    if ($num_mapped == 0) {
-      $items .= "";
-    }
-    else {
-      $record_word = "records . ";
+    if ($num_mapped > 0) {
+      $record_word = "records.";
       if ($num_mapped == 1) {
-        $record_word = "record . ";
+        $record_word = "record.";
       }
       // Page arguments are db shortname, accession, anchor entity ID, mapping bundle ID.
       $query_arguments = [
@@ -258,7 +255,7 @@ function tripal_cv_xray_entity_child_lookup_ajax($vocabulary, $accession, $targe
   $response = [
     'vocabulary' => $vocabulary,
     'accession' => $accession,
-    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $counts, $target_bundle_id),
+    'content' => tripal_cv_xray_field_lookup_term_children_format($anchor_entity_id, $children, $counts, $target_bundle_id, $analysis_id),
   ];
 
   drupal_json_output($response);
