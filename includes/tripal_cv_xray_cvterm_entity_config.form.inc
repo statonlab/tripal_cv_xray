@@ -22,33 +22,33 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
   ];
 
   // Create table of previously indexed bundles.
-  $headers = [
-    'DB Short Name',
-    'Number of Total Entities',
-    'Entities By Bundle',
-  ];
-  $rows = [];
-  $dbs = tripal_cv_xray_retrieve_indexed_dbs();
+  //$headers = [
+  //  'DB Short Name',
+  //  'Number of Total Entities',
+  //  'Entities By Bundle',
+  //];
+  //$rows = [];
+  //$dbs = tripal_cv_xray_retrieve_indexed_dbs();
 
-  if (count($dbs) > 0) {
-    foreach ($dbs as $db) {
-      $name = $db['name'];
-      $sub_count = tripal_cv_xray_count_indexed_entities($name);
-
-      $count = $db['count'];
-
-      $cbyb = theme('table', [
-        'header' => ['Bundle', 'Count'],
-        'rows' => $sub_count,
-      ]);
-      $rows[] = [$name, $count, $cbyb];
-    }
-
-    $form['entity_table'] = [
-      '#type' => 'markup',
-      '#markup' => theme('table', ['header' => $headers, 'rows' => $rows]),
-    ];
-  }
+  //if (count($dbs) > 0) {
+  //  foreach ($dbs as $db) {
+  //    $name = $db['name'];
+  //    $sub_count = tripal_cv_xray_count_indexed_entities($name);
+  //
+  //    $count = $db['count'];
+  //
+  //    $cbyb = theme('table', [
+  //      'header' => ['Bundle', 'Count'],
+  //      'rows' => $sub_count,
+  //    ]);
+  //    $rows[] = [$name, $count, $cbyb];
+  //  }
+  //
+  //  $form['entity_table'] = [
+  //    '#type' => 'markup',
+  //    '#markup' => theme('table', ['header' => $headers, 'rows' => $rows]),
+  //  ];
+  //}
 
   // Get all site vocabs.
   $vocabs = tripal_get_vocabularies();
@@ -77,7 +77,10 @@ function tripal_cv_xray_cvterm_entity_form($form, &$form_state) {
     '#prefix' => '<p>Select a CV to index.  Only index CVs which you will create browsers for.</p>',
   ];
 
-  $supported_tables = ['biomaterial', 'feature'];
+  $supported_tables = [
+    //'biomaterial',
+    'feature'
+  ];
 
   $query = db_select("public.chado_bundle", 'CB')
     ->fields('CB', ['bundle_id']);
