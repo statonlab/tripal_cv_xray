@@ -185,3 +185,15 @@ function tripal_cv_xray_index_remove_single_entity($entity, string $type) {
     ->execute();
 }
 
+/**
+ * Implements hook_permission().
+ */
+function tripal_cv_xray_permission() {
+  $items = [];
+
+  $items['tripal cv xray'] = [
+    'title' => t('Access administrative page'),
+  ];
+
+  return $items;
+}
