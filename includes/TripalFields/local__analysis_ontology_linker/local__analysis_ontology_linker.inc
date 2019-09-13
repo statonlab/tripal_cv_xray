@@ -175,7 +175,8 @@ class local__analysis_ontology_linker extends ChadoField{
       $query->join($bundle_table, 'BT', 'F.feature_id = BT.record_id');
       $query->join('tripal_cvterm_entity_linker', 'TCEL', 'TCEL.entity_id = BT.entity_id');
       $query->condition('F.organism_id', $organisms, 'IN');
-      if ((int) $query->countQuery()->execute()->fetchField() > 0) {
+      $query->range(0, 1);
+      if ($query->execute()->fetchObject()) {
         return TRUE;
       }
     }
