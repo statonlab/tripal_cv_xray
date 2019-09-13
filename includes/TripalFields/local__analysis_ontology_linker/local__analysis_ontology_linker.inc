@@ -112,7 +112,7 @@ class local__analysis_ontology_linker extends ChadoField{
     // need to implement this function. However, if you need to add any
     // additional data to be used in the display, you should add it here.
     if (!db_table_exists('chado.organism_analysis')) {
-      return;
+      return NULL;
     }
 
     if ($entity->chado_table !== 'analysis') {
@@ -125,10 +125,10 @@ class local__analysis_ontology_linker extends ChadoField{
     $organisms = $this->getOrganisms($analysis);
     $bundles = $this->getFeatureBundles();
 
-    if ($this->shouldAttach($organisms, $bundles)) {
-      $data = [];
+    $data = [];
 
-      foreach ($organisms as $organism) {
+    foreach ($organisms as $organism) {
+      if ($this->shouldAttach([$organism], $bundles)) {
         $eid = chado_get_record_entity_by_table('organism', $organism);
         $data[] = [
           'value' => [
@@ -137,9 +137,13 @@ class local__analysis_ontology_linker extends ChadoField{
           ],
         ];
       }
-
-      $entity->local__analysis_ontology_linker['und'] = $data;
     }
+
+    if (empty($data)) {
+      return NULL;
+    }
+
+    $entity->local__analysis_ontology_linker['und'] = $data;
   }
 
   /**
@@ -167,7 +171,7 @@ class local__analysis_ontology_linker extends ChadoField{
     foreach ($feature_bundles as $bundle) {
       $bundle_table = 'chado_bio_data_' . $bundle;
       $query = db_select('chado.feature', 'F');
-      $query->fields('F');
+      $query->fields('F', ['feature_id']);
       $query->join($bundle_table, 'BT', 'F.feature_id = BT.record_id');
       $query->join('tripal_cvterm_entity_linker', 'TCEL', 'TCEL.entity_id = BT.entity_id');
       $query->condition('F.organism_id', $organisms, 'IN');
