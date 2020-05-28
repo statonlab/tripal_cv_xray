@@ -103,9 +103,9 @@ function tripal_cv_xray_bundle_instances_info($entity_type, $bundle) {
         'term_name' => 'analysis_ontology_linker',
         'term_accession' => 'analysis_ontology_linker',
         'auto_attach' => FALSE,
-        'chado_table' => $bundle->data_table,
-        'chado_column' => 'organism_id',
-        'base_table' => $bundle->data_table,
+        //'chado_table' => $bundle->data_table,
+        //'chado_column' => 'organism_id',
+        //'base_table' => $bundle->data_table,
       ),
       'widget' => array(
         'type' => 'local__analysis_ontology_linker_widget',
